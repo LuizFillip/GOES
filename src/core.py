@@ -26,8 +26,8 @@ def read_gzbin(f_name):
 
 
 ds = xr.open_dataset('S10635336_202110231400.nc')
-data = ds['Band1'].values / 10 - 273.13
-data 
+data = (ds['Band1'].values / 100) * -1
+
 
 fig, ax = plt.subplots(
     dpi = 300,
@@ -53,18 +53,22 @@ lon = gg.limits(
 
 gg.map_boundaries(ax, lon, lat)
 
-# plot_sites_and_meridians(ax, year)
-
 gg.mag_equator(
     ax,
     2013,
     degress = None
     )
 
-data[(data < -200) | (data > 0)] = np.nan 
+data[(data > -20)] = np.nan 
+
 
 img = ax.contourf(
-    ds['lon'], ds['lat'],
-         data, cmap = 'rainbow')
+    ds['lon'], 
+    ds['lat'],
+    data, 
+    cmap= 'rainbow'
+    )
 
 plt.colorbar(img)
+
+
