@@ -17,13 +17,13 @@ def map_attrs(lons, lats, data):
     gg.map_features(ax)
     
     lat_lim = gg.limits(
-        min = -70, 
+        min = -50, 
         max = 40, 
         stp = 10
         )
     lon_lim = gg.limits(
         min = -90, 
-        max = -20, 
+        max = -30, 
         stp = 10
         )    
     
@@ -42,6 +42,8 @@ def map_attrs(lons, lats, data):
         lons, 
         lats,
         data, 
-        cmap = 'rainbow'
+        cmap = 'Blues'
         )
+    
+    return ax
         

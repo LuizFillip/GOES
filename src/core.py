@@ -1,9 +1,10 @@
-<<<<<<< HEAD
 import gzip
 import numpy as np
 import xarray as xr
-
+import GOES as gs
 import pandas as pd 
+import GEO as gg 
+
 
 def read_gzbin(f_name):
  
@@ -21,14 +22,6 @@ def read_gzbin(f_name):
         return data_bin / 100 - 273.13
 
 
-
-ds = xr.open_dataset('S10635336_202110231400.nc')
-data = (ds['Band1'].values / 100) * -1
-
-
-
-
-
 def grid_mean(lon, lat, data, grid_size = 100):
     
     num_grids_x = data.shape[0] // grid_size
@@ -42,8 +35,12 @@ def grid_mean(lon, lat, data, grid_size = 100):
 
     for i in range(num_grids_x):
         
-        new_lons[i] = lon[i * grid_size:(i + 1) * grid_size].mean()
-        new_lats[i] = lat[i * grid_size:(i + 1) * grid_size].mean()
+        new_lons[i] = lon[
+            i * grid_size:(i + 1) * grid_size
+            ].mean()
+        new_lats[i] = lat[
+            i * grid_size:(i + 1) * grid_size
+            ].mean()
         
         for j in range(num_grids_y):
             
@@ -66,7 +63,8 @@ def structured_data(nlons, nlats, grid):
     
     return np.column_stack((x, y, grid_means))
 
-def recover_dataframe(structured_data):
+def recover_dataset(structured_data):
+    
     ns = ['lon', 'lat', 'temp']
     df = pd.DataFrame(
         structured_data, 
@@ -74,77 +72,154 @@ def recover_dataframe(structured_data):
         )
     
     return pd.pivot_table(
-        df, columns = ns[0], index = ns[1], values = ns[2])
+        df, 
+        columns = ns[0], 
+        index = ns[1], 
+        values = ns[2]
+        )
 
+
+
+fname = 'GOES/data/S10635336_202110231400.nc'
+
+def fname2date(fname):
+    dn = fname.split('_')[-1][:-3]
+    return dt.datetime.strptime(dn, '%Y%m%d%H%M')
+
+
+import datetime as dt 
+
+def find_storms(ax, ds):
+        
+        
+    index = ds.index.values
+    
+    out = []
+    
+    for i in range(len(ds) - 1):
+        
+        idx = index[i + 1] - index[i]
+        
+        if idx > 100:
+            
+            out.append(index[i + 1])
+            
+            
+            
+    vls = ds.loc[ds.index == out[0]]
+    
+    if vls['lon'].min() == vls['lon'].max():
+        
+        clon, clat = gg.plot_square_area(
+                ax, 
+                lat_min = vls['lat'].min(), 
+                lon_min = vls['lon'].min(),
+                lat_max = None, 
+                lon_max = None, 
+                radius = 5
+                )
+    
+    # ds = ds.loc[~(ds.index == vls.index[0])]
+    
+    
+    # clon, clat = gg.plot_square_area(
+    #         ax, 
+    #         lat_min = ds['lat'].min(), 
+    #         lon_min = ds['lon'].min(),
+    #         lat_max = ds['lat'].max(), 
+    #         lon_max = ds['lon'].max(), 
+    #         radius = 10
+    #         )
+
+
+def dataset_to_frame(fname):
+    
+    ds = xr.open_dataset(fname)
+    
+    data = (ds['Band1'].values / 100) * -1
+    
+    lat = ds.lat.values
+    lon = ds.lon.values
+    
+    ax = gs.map_attrs(lon, lat, data)
+    
+    
+    
+    nlons, nlats, grid = grid_mean(
+        lon, lat, data, 
+        grid_size = 100
+        )
+    
+    ns = ['lon', 'lat', 'temp']
+    
+    df = pd.DataFrame(
+        structured_data(nlons, nlats, grid), 
+        columns = ns
+        )
+    
+    df['date'] = fname2date(fname)
+    
+ #   ax = gs.map_attrs(nlons, nlats, grid)
+
+    find_storms(ax, df)
+    return df 
+
+# dataset_to_frame(fname)
+
+# df = dataset_to_frame(ds)
+
+# ds = df.loc[df['temp'] < -30]
+
+
+ds = xr.open_dataset(fname)
+
+data = (ds['Band1'].values / 100) * -1
 
 lat = ds.lat.values
 lon = ds.lon.values
 
-nlons, nlats, grid = grid_mean(
-    lon, lat, data, grid_size = 50
+ 
+
+glon, glat, grid = grid_mean(
+    lon, lat, data, 
+    grid_size = 100
     )
 
-map_attrs(nlons, nlats, grid)
-=======
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Oct  3 15:59:32 2023
+ns = ['lon', 'lat', 'temp']
 
-@author: Luiz
-"""
+ds = pd.DataFrame(
+    structured_data(glon, glat, grid), 
+    columns = ns
+    )
 
-import xarray as xr
-import numpy as np
-from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
-import matplotlib.ticker as mticker
-from matplotlib import ticker, cm
-import time 
-import cartopy.io.img_tiles as cimgt
+ds['date'] = fname2date(fname)
 
+ax = gs.map_attrs(glon, glat, grid)
 
+vls = ds.loc[ds['temp'] < -50].min()
 
-# Carregue seus dados binários aqui (depende do formato)
-def read_gzbin(f_name, threshold):
-    # import necessary libraries
-    import numpy as np
-    import gzip
-    from datetime import datetime
-    
-    # extract date and time from file name
-    date_str = f_name[-15:-3]
-    date_obj = datetime.strptime(date_str, '%Y%m%d%H%M')#%S
-    
-    # read binary data from gzip-compressed file
-    with gzip.open(f_name, 'rb') as f:
-        uncompressed_data = f.read()
-        dados_binarios = np.frombuffer(uncompressed_data, dtype=np.int16)
+# clon, clat = gg.plot_square_area(
+#         ax, 
+#         lat_min = vls['lat'].min(), 
+#         lon_min = vls['lon'].min(),
+#         lat_max = None, 
+#         lon_max = None, 
+#         radius = 7
+#         )
 
-        
-        # reshape binary data into a 2D numpy array
-        imageSize = [1800,1800]
-        dados_binarios = dados_binarios.reshape(imageSize)
-        
-        # Define x and y positions
-        dlon=np.arange(dados_binarios.shape[1]) * 0.04 - 100
-        dlat=np.arange(dados_binarios.shape[0]) * 0.04 - 50
-        
-        
-        # return the 2D numpy array, dlon, dlat, and date_obj
-        return dados_binarios, dlon, dlat, date_obj
+import matplotlib.pyplot as plt
 
 
-caminho = 'C:/2023/Beckup_note/ANDERSON/PCI_D_inpe_2023\
-/mapas_temp_nuvem_python/03-06-2005-goes12_ch4/'                              
+clat = vls['lat']
+clon = vls['lon']
 
-# f_name='gcr.050602.0200_0200g.ch4'
-nome = 'S10216956_200506020330.gz'
+circle = plt.Circle(
+    (clon, clat), 
+    5, 
+    lw =2,
+    edgecolor = 'red', 
+    color = 'red', 
+    )
 
-f_name = caminho+nome
+plt.gca().add_patch(circle)
 
-saida = caminho 
-
-#Deletes values higher than -65 celcius degress
-threshold = 0. 
-data, dlon, dlat, date_obj = read_gzbin(f_name, threshold)
-###====================================================================
->>>>>>> cf7f95ccc0c59f8414b62e2c7b376b9ca550b840
