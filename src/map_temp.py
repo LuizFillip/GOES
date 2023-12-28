@@ -35,9 +35,6 @@ def map_attrs(lons, lats, data):
         degress = None
         )
     
-    # data[(data > -40)] = np.nan 
-    
-    
     ax.contourf(
         lons, 
         lats,

@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Oct 23 22:16:14 2023
 
-@author: Luiz
-"""
 
 def find_regions_below_threshold_2d(arr, threshold):
     regions = []  # List to store the regions
