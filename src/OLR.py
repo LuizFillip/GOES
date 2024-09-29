@@ -50,19 +50,55 @@ def OLR_Map(df, dn ):
     gg.plot_rectangles_regions(ax, dn.year)
 
 b.config_labels()
+import PlasmaBubbles as pb 
 
-year = 2019
-
-infile = f'GOES/data/olr-daily_v01r02_{year}0101_{year}1231.nc'
 infile = 'GOES/data/olr.cbo-2.5deg.day.mean.nc'
 ds = xr.open_dataset(infile)
-
+ds['lon'] = ds['lon'] - 180
 ds['time'] = pd.to_datetime(ds['time'])
 
-dn = dt.datetime(year, 6, 1)
 
-df = ds.sel(time = dn)
+
+def select_data_by_time(ds, dn):
     
-OLR_Map(df, dn)
+    df = ds.sel(time = dn)
+    
+    df = df.to_dataframe()
+    
+    df['lon'] = df.index.get_level_values(1)
+    df['lat'] = df.index.get_level_values(0)
+    
+    df.index = df['time']
+    
+    del df['time']
+    
+    return df
 
-# df
+def get_averages_by_sector(df, dn):
+    
+    out = {}
+    for sector in np.arange(-80, -40, 10):
+        
+        data_filtered = pb.filter_region(df, dn.year, sector)
+        out[sector] = data_filtered['olr'].mean()
+    
+    return pd.DataFrame(out, index = [dn])
+
+from tqdm import tqdm 
+
+def run_in_avg(ds):
+    dates = pd.date_range('2013-01-01', '2023-12-31')
+    
+    out = []
+    
+    for dn in tqdm(dates, 'OLR-avg'):
+        df = select_data_by_time(ds, dn)
+        
+        out.append(get_averages_by_sector(df, dn))
+        
+        
+    return pd.concat(out)
+
+df = run_in_avg(ds)
+ds.to_csv('GOES/data/OLR_avg')
+
