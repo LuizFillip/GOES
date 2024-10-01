@@ -6,18 +6,30 @@ import cartopy.crs as ccrs
 import datetime as dt
 import matplotlib.pyplot as plt
 import numpy as np 
+from tqdm import tqdm 
+
+lat_lims = dict(min = -40, max = 20, stp = 10)
+lon_lims = dict(min = -90, max = -30, stp = 10) 
+
+# lat_lims = dict(min = -90, max = 90, stp = 15)
+# lon_lims = dict(min = -180, max = 180, stp = 30) 
 
 
-def OLR_Map(df, dn ):
-    fig, ax = plt.subplots(
-         figsize = (10, 10), 
-         dpi = 300, 
-         subplot_kw = 
-         {'projection': ccrs.PlateCarree()}
-         )
+
+def OLR_Map(df, dn, ax = None):
+    
+    if ax is None:
+        fig, ax = plt.subplots(
+             figsize = (16, 12), 
+             dpi = 300, 
+             subplot_kw = 
+             {'projection': ccrs.PlateCarree()}
+             )
     
     gg.map_attrs(
         ax, dn.year, 
+        lat_lims  = lat_lims, 
+        lon_lims = lon_lims,
         grid = False,
         degress = None
         )
@@ -26,42 +38,43 @@ def OLR_Map(df, dn ):
     lat = df['lat'].values
     values = df['olr'].values
     
+    levels = np.arange(70, 400, 5)
+    
     img = ax.contourf(
         lon,
         lat, 
         values, 
-        30, 
+        levels = levels, 
         cmap = 'jet'
         )
     
-    ticks = np.arange(values.min(), values.max(), 50)
+    ticks = np.arange(70, 400, 100)
+    
     b.colorbar(
             img, 
             ax, 
             ticks, 
             label = 'OLR (Watts/$m^2$)', 
             height = "100%", 
-            width = "10%",
+            width = "3%",
             orientation = "vertical", 
-            anchor = (.25, 0., 1, 1)
+            anchor = (.1, 0., 1, 1)
             )
     
     ax.set(title = dn.strftime('%Y-%m-%d'))
     gg.plot_rectangles_regions(ax, dn.year)
+    
+    if ax is None:
+        return fig
+    else:
+        return ax
 
 b.config_labels()
-import PlasmaBubbles as pb 
-
-infile = 'GOES/data/olr.cbo-2.5deg.day.mean.nc'
-ds = xr.open_dataset(infile)
-ds['lon'] = ds['lon'] - 180
-ds['time'] = pd.to_datetime(ds['time'])
 
 
 
-def select_data_by_time(ds, dn):
-    
-    df = ds.sel(time = dn)
+
+def dataset_to_dataframe(df):
     
     df = df.to_dataframe()
     
@@ -74,31 +87,103 @@ def select_data_by_time(ds, dn):
     
     return df
 
-def get_averages_by_sector(df, dn):
+
+
+def sel_sector(df, sector , year,  step = 0.5):
+
+    corners = gg.set_coords(year)
     
+    xlim, ylim = corners[sector]
+    
+    return df.sel(
+        lon = slice(xlim[0] - step, xlim[1] + step), 
+        lat = slice(ylim[0] - step, ylim[1] + step)
+        )
+
+
+def sel_sector2(df, sector , year,  step = 0.5):
+
+    corners = gg.set_coords(year)
+    
+    xlim, ylim = corners[sector]
+    
+    return df.sel(
+        lon = slice(xlim[0] - step, xlim[1] + step), 
+        lat = slice(ylim[1] - step, ylim[0] + step)
+        )
+
+
+def interpol_data(ds):
+
+
+    
+    new_lon = np.linspace(ds.lon[0], ds.lon[-1], 360)
+    
+    new_lat = np.linspace(ds.lat[0], ds.lat[-1], 180)
+    
+    ds = ds.interp(lat = new_lat, lon = new_lon)
+
+# fig, ax = plt.subplots(
+#       figsize = (16, 12), 
+#       dpi = 300, 
+#       subplot_kw = 
+#       {'projection': ccrs.PlateCarree()}
+#       )
+
+def get_avg(ds):
     out = {}
-    for sector in np.arange(-80, -40, 10):
-        
-        data_filtered = pb.filter_region(df, dn.year, sector)
-        out[sector] = data_filtered['olr'].mean()
+    dn = pd.to_datetime(ds['time'].values)
     
+    for sector in np.arange(-80, -40, 10):
+        df = sel_sector2(ds, sector, dn.year)
+        
+        out[sector] = df['olr'].mean().values
+        
     return pd.DataFrame(out, index = [dn])
+    
+# 
 
-from tqdm import tqdm 
-
-def run_in_avg(ds):
-    dates = pd.date_range('2013-01-01', '2023-12-31')
+def runnig_by_days(ds, year):
     
     out = []
-    
-    for dn in tqdm(dates, 'OLR-avg'):
-        df = select_data_by_time(ds, dn)
+    print('starting', year)
+    for day in tqdm(range(365)):
         
-        out.append(get_averages_by_sector(df, dn))
+        delta = dt.timedelta(days = day)
+        
+        dn = dt.datetime(year, 1, 1) + delta
+            
+        out.append(get_avg(ds.sel(time = dn)))
+         
+    return pd.concat(out)
+
+
+infile = 'GOES/data/olr.cbo-2.5deg.day.mean.nc'
+
+year = 2013
+infile = f'GOES/data/olr-daily_v01r02_{year}0101_{year}1231.nc'
+infile = 'GOES/data/olr.day.mean.nc'
+ds = xr.open_dataset(infile)
+ds['lon'] = ds['lon'] - 180
+ds['time'] = pd.to_datetime(ds['time'])
+
+
+# dn = dt.datetime(year, 12, 24)
+
+# ds = ds.sel(time = dn)
+def running_by_years(ds):
+        
+    out = []
+    for year in range(2013, 2023, 1):
+        out.append(runnig_by_days(ds, year))
         
         
     return pd.concat(out)
 
-df = run_in_avg(ds)
-ds.to_csv('GOES/data/OLR_avg')
+df = running_by_years(ds)
+df.to_csv('olr')
 
+# fig = OLR_Map(ds, dn)
+
+# 
+# get_avg(ds)
