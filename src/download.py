@@ -29,7 +29,7 @@ def download_goes16(year,month,dom_unique):
         
 
         if unique_date == file_date:
-            # Verify if the file alredy exists in the hard drive---------------    
+ 
             local_file_path = os.path.join(folder_save, file_name)
             if not os.path.exists(local_file_path):
                 file_url = urljoin(base_url, file_name)
