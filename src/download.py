@@ -1,44 +1,60 @@
-import os
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+import pandas as pd
+import os 
+from time import time
+import Webscrape as wb 
+import datetime as dt 
+import GOES as gs
 
 
-def download_goes16(year,month,dom_unique):
+dn = dt.datetime(2013, 1, 1)
+str_mn = dn.strftime("%m")
+str_yr = dn.strftime("%Y")
+
+def pURL(str_yr, str_mn):
     
-    #GOES 16
-    base_url = f"http://ftp.cptec.inpe.br/goes/goes16/retangular/ch13/{year:04d}/{month:02d}/"
-    # #GOES 13
-    # base_url = f"http://ftp.cptec.inpe.br/goes/goes13/retangular_4km/ch4_bin/{year:04d}/{month:02d}/"
+    base = "http://ftp.cptec.inpe.br/goes/goes13/retangular_4km/ch4_bin/"
     
-    unique_date = f"{year}{month:02d}{dom_unique:02d}"  # Modify this with your desired maximum date
-    folder_save = f"/media/hisashi/D/Banco_Dados/CPTEC/{year:04d}/{month:02d}/{dom_unique}/"
+    return f'{base}{str_yr}/{str_mn}/'
+
+path_to_save = 'E:\\database\\goes\\'
+
+out_mean = []
+out_sum = []
+
+url =  pURL(str_yr, str_mn)
+
+s = time()
+for href in wb.request(url):
     
-    if not os.path.exists(folder_save):
-        os.makedirs(folder_save)
-    
-    response = requests.get(base_url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    
-    for link in soup.find_all('a'):
-        file_name = link.get('href')
-        if file_name == "../" or not file_name.endswith('.nc'):
-            continue
-        file_date = file_name.split('_')[1].split('.')[0][:8]
+    if href.endswith('gz'):
         
+        print('downloading', href)
+        
+        wb.download(
+            url, 
+            href, 
+            path_to_save
+            )
+        
+        fname = os.path.join(
+            path_to_save, href
+            )
+        dn = gs.fname2date(fname)
+        
+        print('processing', dn)
 
-        if unique_date == file_date:
- 
-            local_file_path = os.path.join(folder_save, file_name)
-            if not os.path.exists(local_file_path):
-                file_url = urljoin(base_url, file_name)
-                print("Downloading:", file_name)
-                with open(os.path.join(folder_save, file_name), 'wb') as file:
-                    file_response = requests.get(file_url)
-                    file.write(file_response.content)
-            if os.path.exists(local_file_path):
-                print("File in the disk:", file_name)
-                
-    
-    print(f"Download completed for [{year}{month:02d}{dom_unique:02d}]")
+        df_mean, df_sum = gs.get_mean_sum(
+           gs.binary_to_dataset(fname), dn)
+        
+        out_mean.append(df_mean)
+        out_sum.append(df_sum)
+        
+ds1 = pd.concat(out_sum)
+ds = pd.concat(out_mean)
+
+ds.to_csv('mean_convect')
+ds1.to_csv('sum_convect')
+
+e = time()
+
+print((e - s) / 3600)
