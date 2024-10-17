@@ -96,3 +96,32 @@ class plotTopCloud(object):
             grid = False,
             degress = None
             )
+
+    def plot_regions(
+            self, 
+            x_stt, y_stt, x_end, y_end, 
+            number = None
+            ):
+        
+      
+        rect = plt.Rectangle(
+        (x_stt, y_stt), 
+            x_end - x_stt, 
+            y_end - y_stt,
+            edgecolor = 'k', 
+            facecolor = 'none', 
+            linewidth = 3
+            )
+        
+        self.ax.add_patch(rect)
+        
+        if number is not None:
+            middle_y = (y_end + y_stt) / 2
+            middle_x = (x_end + x_stt) / 2
+            
+            self.ax.text(
+                middle_x, 
+                middle_y + 1, number, 
+                transform = self.ax.transData
+                )
+
