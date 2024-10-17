@@ -16,8 +16,13 @@ class plotTopCloud(object):
     
     b.config_labels()
 
-    def __init__(self, data, lons, lats, 
-                 figsize = (12, 10)):
+    def __init__(
+            self, 
+            data, 
+            lons, 
+            lats, 
+            figsize = (12, 10)
+            ):
         
         self.data = data 
         self.lons = lons
@@ -47,12 +52,10 @@ class plotTopCloud(object):
     def colorbar(
             self, 
             orientation = "vertical", 
-            
+            step = 20
             ):
-        vmin = -100 #np.nanmin(data)
-        vmax = 100 #np.max(data)
-        step = 20
-        ticks = np.arange(vmin, vmax + step, step)
+
+        ticks = np.arange(-100, 100 + step, step)
         
         if orientation == 'horizontal':
             height = '10%' 
