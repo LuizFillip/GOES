@@ -123,13 +123,6 @@ def interpol_data(ds):
     
     ds = ds.interp(lat = new_lat, lon = new_lon)
 
-# fig, ax = plt.subplots(
-#       figsize = (16, 12), 
-#       dpi = 300, 
-#       subplot_kw = 
-#       {'projection': ccrs.PlateCarree()}
-#       )
-
 def get_avg(ds):
     out = {}
     dn = pd.to_datetime(ds['time'].values)
@@ -158,32 +151,3 @@ def runnig_by_days(ds, year):
     return pd.concat(out)
 
 
-infile = 'GOES/data/olr.cbo-2.5deg.day.mean.nc'
-
-year = 2013
-infile = f'GOES/data/olr-daily_v01r02_{year}0101_{year}1231.nc'
-infile = 'GOES/data/olr.day.mean.nc'
-ds = xr.open_dataset(infile)
-ds['lon'] = ds['lon'] - 180
-ds['time'] = pd.to_datetime(ds['time'])
-
-
-# dn = dt.datetime(year, 12, 24)
-
-# ds = ds.sel(time = dn)
-def running_by_years(ds):
-        
-    out = []
-    for year in range(2013, 2023, 1):
-        out.append(runnig_by_days(ds, year))
-        
-        
-    return pd.concat(out)
-
-df = running_by_years(ds)
-df.to_csv('olr')
-
-# fig = OLR_Map(ds, dn)
-
-# 
-# get_avg(ds)
