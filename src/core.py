@@ -93,10 +93,10 @@ def load_files(ref_day):
    
     return [os.path.join(path, f) for f in files]
 
-def CloudTopKeogram(fname, lon = -55):
+def CloudTopKeogram(files, lon = -55):
     out = []
     
-    for file in tqdm(files, 'KEO'):
+    for fname in tqdm(files, 'KEO'):
 
         CT = CloudyTemperature(fname)
         
@@ -154,40 +154,12 @@ def find_nucleos(
     return pd.DataFrame(out, columns = columns)
         
 
-
-ref_day = dt.datetime(2013, 1, 2)
-files = load_files(ref_day)
-fname = files[0]
-
-
-
-# ptc = gs.plotTopCloud(data, lons, lats)
-
-# ptc.add_map()
-# ptc.colorbar()
-
-# fig, ax = ptc.figure_axes 
-
-# ax.set(title = fname2date(fname))
-
-
-# for index, row in ds.iterrows():
-    
-#     ptc.plot_regions(
-#         row['x0'], 
-#         row['y0'],
-#         row['x1'], 
-#         row['y1'], 
-#         # i = indexs
-#         )
-
 def nucleos_catalog(fname):
     
     ds = CloudyTemperature(fname)
     data = ds.data[::-1]
     lons = ds.lon 
     lats = ds.lat
-    
     
     data = np.where(data > -60, np.nan, data)
     
@@ -199,4 +171,53 @@ def nucleos_catalog(fname):
 
     ds['time'] = fname2date(fname)
     
-    return ds
+    return ds.set_index('time')
+
+
+
+def test_plot(fname):
+    ds = CloudyTemperature(fname)
+    ptc = gs.plotTopCloud(ds.data, ds.lons, ds.lats)
+    
+    ptc.add_map()
+    ptc.colorbar()
+    
+    fig, ax = ptc.figure_axes 
+    
+    ax.set(title = fname2date(fname))
+    
+    
+    for index, row in ds.iterrows():
+        
+        ptc.plot_regions(
+            row['x0'], 
+            row['y0'],
+            row['x1'], 
+            row['y1'], 
+            # i = indexs
+            )
+
+def goes_path(dn, b = 'E'):
+    
+    mn = dn.strftime("%m")
+    yr = dn.strftime("%Y")
+    return f'{b}:\\database\\goes\\{yr}\\{mn}\\'
+    
+
+def walk_goes(dn, b = 'E'):
+    
+    path = goes_path(dn, b)
+    
+    return [os.path.join(path, f) for f in os.listdir(path)]
+
+
+def run_nucleos(dn):
+    
+    out = []
+    for file in tqdm(walk_goes(dn, b = 'E')):
+        
+        out.append(nucleos_catalog(file))
+        
+    return pd.concat(out)
+    
+    

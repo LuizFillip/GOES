@@ -7,9 +7,6 @@ from tqdm import tqdm
 import pandas as pd 
 
 
-dn = dt.datetime(2013, 1, 1)
-
-
 def pURL(str_yr, str_mn):
     
     base = "http://ftp.cptec.inpe.br/goes/goes13/retangular_4km/ch4_bin/"
@@ -52,8 +49,7 @@ dates = pd.date_range(
     )
 
 for dn in dates:
-    dowloadGOES(dn, B = 'E')
-
+    dowloadGOES(dn, B = 'D')
 
 e = time()
 
