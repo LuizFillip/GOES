@@ -1,15 +1,12 @@
 import gzip
 import numpy as np
-import base as b
 import pandas as pd 
-
 import datetime as dt 
 import matplotlib.pyplot as plt 
-
 from tqdm import tqdm 
 import os 
 from scipy.ndimage import label, find_objects
-
+import GOES as gs
 
 
 
@@ -124,7 +121,6 @@ def find_nucleos(
         data, 
         lons, 
         lats,
-        ax = None,
         area_treshold = 40,
         step = 0.5, 
         by_indexes = True
@@ -134,95 +130,69 @@ def find_nucleos(
         
     ymax, xmax = data.shape
     
+    out = []
     for i, region in enumerate(find_objects(labeled_array)):
        
         x_stt, x_end = region[1].start, region[1].stop
         y_stt, y_end = region[0].start, region[0].stop
         
+    
+        if by_indexes:
+            if (x_end == xmax):
+                x_end = -1
+            if (y_end == ymax):
+                y_end = -1
+            
+            x_stt, x_end = lons[x_stt], lons[x_end]
+            y_stt, y_end = lats[y_stt], lats[y_end] 
         
-        area = (y_end - y_stt) * (x_end - x_stt)
-        
-        if area > area_treshold:
+            area = abs((y_end - y_stt) * (x_end - x_stt))
             
-            if by_indexes:
-                if (x_end == xmax):
-                    x_end = -1
-                if (y_end == ymax):
-                    y_end = -1
-                
-                x_stt, x_end = lons[x_stt], lons[x_end]
-                y_stt, y_end = lats[y_stt], lats[y_end] 
+            if area > area_treshold:
+                out.append([x_stt, x_end, y_stt, y_end, area])
             
-            if ax is not None:
-                rect = plt.Rectangle(
-                    (x_stt, y_stt), 
-                    x_end - x_stt, 
-                    y_end - y_stt,
-                    edgecolor = 'k', 
-                    facecolor = 'none', 
-                    linewidth = 3
-                    )
-            
-                ax.add_patch(rect)
-                # middle_y = (y_end + y_stt) / 2
-                # middle_x = (x_end + x_stt) / 2
-                # ax.text(
-                #     middle_x, 
-                #     middle_y + 1, i, 
-                #     transform = ax.transData
-                #     )
-    return
+    columns = ['x0', 'x1', 'y0', 'y1', 'area']
+    return pd.DataFrame(out, columns = columns)
         
 
 
-def plot_data_foo(fname):
-    ds = CloudyTemperature(fname)
-    data = ds.data[::-1]
-    lons = ds.lon 
-    lats = ds.lat
-    
-    ptc = plotTopCloud(data, lons, lats)
-    
-    ptc.add_map()
-    ptc.colorbar()
-    
-    fig, ax = ptc.figure_axes 
-    
-    data = np.where(data > -60, np.nan, data)
-    
-    find_nucleos(
-            data, 
-            lons, 
-            lats[::-1],
-            ax,
-            area_treshold = 60,
-            step = 0.5
-            )
-    
-    ax.set(title = fname2date(fname))
-    return fig 
-    
-path = 'E:\\database\\nucleos\\'
-
-ref_day = dt.datetime(2013, 1, 5)
+ref_day = dt.datetime(2013, 1, 2)
 files = load_files(ref_day)
-
-for fname in tqdm(files, 'saving'):
-    
-    plt.ioff()
-
-    dn = fname2date(fname)
-    
-    fig = plot_data_foo(fname)
-    
-    FigureName = dn.strftime('%Y%m%d%H%M')
-    
-    fig.savefig(path + FigureName, dpi = 100)
-    
-    plt.clf()   
-    plt.close()
+fname = files[0]
 
 
-# fname = files[0]
+ds = CloudyTemperature(fname)
+data = ds.data[::-1]
+lons = ds.lon 
+lats = ds.lat
 
-# fig = plot_data_foo(fname)
+ptc = gs.plotTopCloud(data, lons, lats)
+
+ptc.add_map()
+ptc.colorbar()
+
+fig, ax = ptc.figure_axes 
+
+ax.set(title = fname2date(fname))
+
+data = np.where(data > -60, np.nan, data)
+
+ds = find_nucleos(
+        data, 
+        lons, 
+        lats[::-1],
+        area_treshold = 1,
+        step = 0.5
+        )
+
+
+for index, row in ds.iterrows():
+    
+    plot_regions(
+        ax, 
+        row['x0'], 
+        row['y0'],
+        row['x1'], 
+        row['y1'], 
+        i = index
+        )
