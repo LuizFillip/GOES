@@ -211,13 +211,28 @@ def walk_goes(dn, b = 'E'):
     return [os.path.join(path, f) for f in os.listdir(path)]
 
 
-def run_nucleos(dn):
-    
+def run_nucleos(dn, b = 'E'):
+    io = dn.strftime('%Y-%m')
     out = []
-    for file in tqdm(walk_goes(dn, b = 'E')):
+    for file in tqdm(walk_goes(dn, b), io):
         
         out.append(nucleos_catalog(file))
         
     return pd.concat(out)
+
+
+dates = pd.date_range(
+    dt.datetime(2013, 1, 1),
+    dt.datetime(2013, 12, 31), 
+    freq = '1M'
+    )
+
+out = []
+for dn in dates:
+   
+    out.append(run_nucleos(dn, b = 'D'))
     
     
+df = pd.concat(out)
+
+df.to_csv('test_goes') 

@@ -40,17 +40,17 @@ def dowloadGOES(dn, B = 'E'):
             
     return None 
 
-s = time()
+# s = time()
 
-dates = pd.date_range(
-    dt.datetime(2013, 1, 1),
-    dt.datetime(2017, 12, 31), 
-    freq = '1M'
-    )
+# dates = pd.date_range(
+#     dt.datetime(2013, 1, 1),
+#     dt.datetime(2017, 12, 31), 
+#     freq = '1M'
+#     )
 
-for dn in dates:
-    dowloadGOES(dn, B = 'D')
+# for dn in dates:
+#     dowloadGOES(dn, B = 'D')
 
-e = time()
+# e = time()
 
-print((e - s)/ 3600, 'hours')
+# print((e - s)/ 3600, 'hours')
