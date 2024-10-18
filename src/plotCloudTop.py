@@ -1,4 +1,4 @@
-import GOES 
+import GOES  as gs
 from matplotlib import cm
 import cartopy.crs as ccrs
 import base as b 
@@ -8,7 +8,7 @@ import GEO as gg
 
 
 def goes_cmap(path = 'GOES/src/colorbar.cpt'):
-    cpt = GOES.loadCPT(path)
+    cpt = gs.loadCPT(path)
     return cm.colors.LinearSegmentedColormap('cpt', cpt) 
 
 
@@ -128,3 +128,26 @@ class plotTopCloud(object):
                 transform = self.ax.transData
                 )
 
+
+
+def test_plot(fname):
+    ds = gs.CloudyTemperature(fname)
+    ptc = gs.plotTopCloud(ds.data, ds.lons, ds.lats)
+    
+    ptc.add_map()
+    ptc.colorbar()
+    
+    fig, ax = ptc.figure_axes 
+    
+    ax.set(title = gs.fname2date(fname))
+    
+    
+    for index, row in ds.iterrows():
+        
+        ptc.plot_regions(
+            row['x0'], 
+            row['y0'],
+            row['x1'], 
+            row['y1'], 
+            # i = indexs
+            )
