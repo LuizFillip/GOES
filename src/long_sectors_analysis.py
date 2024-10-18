@@ -1,9 +1,7 @@
 import base as b 
 import numpy as np 
-import matplotlib.pyplot as plt
 import pandas as pd
 import GEO as gg
-import core as c
 
 
 def filter_region(df, year, sector):
@@ -34,3 +32,16 @@ def get_mean_sum(df, dn):
         out_mean[sector] = np.nanmean(data)
 
     return pd.DataFrame(out_mean, index = [dn])
+
+
+import base as b 
+
+df = b.load('test_goes')
+
+df = df.loc[df['area'] > 10]
+# df = df.between_time('22:00', '06:00')
+# ds = df.resample('1H').count()
+
+# ds['area'].plot(figsize = (12, 6))
+
+df
