@@ -7,10 +7,18 @@ from tqdm import tqdm
 import pandas as pd 
 
 
-def pURL(str_yr, str_mn):
+def goesURL(str_yr, str_mn):
     
-    base = "http://ftp.cptec.inpe.br/goes/goes13/retangular_4km/ch4_bin/"
+    year = int(str_yr)
     
+    base = "http://ftp.cptec.inpe.br/goes/"
+    
+    if year < 2018:
+        base += 'goes13/retangular_4km/ch4_bin/'
+    else:
+        base += 'goes16/retangular/ch13/'
+        
+        
     return f'{base}{str_yr}/{str_mn}/'
 
 
@@ -24,7 +32,7 @@ def dowloadGOES(dn, B = 'E'):
     b.make_dir(path_yr)
     path_mn = os.path.join(path_yr, str_mn)
     b.make_dir(path_mn)
-    url =  pURL(str_yr, str_mn)
+    url = goesURL(str_yr, str_mn)
     
     info = f'{str_mn}-{str_yr}'
     
@@ -40,17 +48,17 @@ def dowloadGOES(dn, B = 'E'):
             
     return None 
 
-# s = time()
+s = time()
 
-# dates = pd.date_range(
-#     dt.datetime(2013, 1, 1),
-#     dt.datetime(2017, 12, 31), 
-#     freq = '1M'
-#     )
+dates = pd.date_range(
+    dt.datetime(2014, 5, 1),
+    dt.datetime(2017, 12, 31), 
+    freq = '1M'
+    )
 
-# for dn in dates:
-#     dowloadGOES(dn, B = 'D')
+for dn in dates:
+    dowloadGOES(dn, B = 'D')
 
-# e = time()
+e = time()
 
-# print((e - s)/ 3600, 'hours')
+print((e - s)/ 3600, 'hours')
