@@ -2,7 +2,6 @@ import gzip
 import numpy as np
 import pandas as pd 
 import datetime as dt 
-import matplotlib.pyplot as plt 
 from tqdm import tqdm 
 import os 
 from scipy.ndimage import label, find_objects
@@ -26,6 +25,17 @@ def read_gzbin(f_name):
     
         return data_bin / 100 - 273.13
 
+def read_dataset(fname):
+    
+    ds = xr.open_dataset(fname)
+    
+    ds['Band1'] = ds['Band1']  / 100 - 273.13
+    
+    data = ds['Band1'].values 
+    lats = ds['lat'].values
+    lons = ds['lon'].values 
+    return lons, lats, data 
+
 
 def fname2date(fname):
     dn = fname.split('_')[-1][:-3]
@@ -38,12 +48,21 @@ class CloudyTemperature(object):
     
     def __init__(self, fname):
         self.fname = fname
-        self.data = read_gzbin(fname)
-        shape = self.data.shape
-        self.lon = np.arange(shape[1]) * 0.04 - 100
-        self.lat = np.arange(shape[0]) * 0.04 - 50
-    
         
+        self.dn = fname2date(fname)
+        
+        if self.dn.year < 2018:
+            self.data = read_gzbin(fname)
+            shape = self.data.shape
+            self.lon = np.arange(shape[1]) * 0.04 - 100
+            self.lat = np.arange(shape[0]) * 0.04 - 50
+        else:
+            lon, lat, data = read_dataset(fname)
+            self.lon = lon
+            self.lat = lat
+            self.data = data
+            
+            
     @property
     def to_dataset(self):
         data = self.structured_data(
@@ -56,7 +75,7 @@ class CloudyTemperature(object):
             columns = ['lon', 'lat', 'temp']
             )
         
-        ds['time'] = fname2date(self.fname)
+        ds['time'] = self.dn
         
         return ds 
     
@@ -175,27 +194,6 @@ def nucleos_catalog(fname):
 
 
 
-def test_plot(fname):
-    ds = CloudyTemperature(fname)
-    ptc = gs.plotTopCloud(ds.data, ds.lons, ds.lats)
-    
-    ptc.add_map()
-    ptc.colorbar()
-    
-    fig, ax = ptc.figure_axes 
-    
-    ax.set(title = fname2date(fname))
-    
-    
-    for index, row in ds.iterrows():
-        
-        ptc.plot_regions(
-            row['x0'], 
-            row['y0'],
-            row['x1'], 
-            row['y1'], 
-            # i = indexs
-            )
 
 def goes_path(dn, b = 'E'):
     
@@ -227,12 +225,18 @@ dates = pd.date_range(
     freq = '1M'
     )
 
-out = []
-for dn in dates:
-   
-    out.append(run_nucleos(dn, b = 'D'))
+def start_process(dates):
+    out = []
+    for dn in dates:
+       
+        out.append(run_nucleos(dn, b = 'D'))
+        
+        
+    df = pd.concat(out)
     
+    df.to_csv('test_goes') 
     
-df = pd.concat(out)
+import xarray as xr 
 
-df.to_csv('test_goes') 
+fname = 'GOES/data/S10635346_201801010000.nc'
+
