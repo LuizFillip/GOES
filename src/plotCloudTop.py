@@ -102,19 +102,20 @@ class plotTopCloud(object):
 
     def plot_regions(
             self, 
-            x_stt, y_stt, x_end, y_end, 
+            x_stt, y_stt, 
+            x_end, y_end, 
             number = None
             ):
         
       
         rect = plt.Rectangle(
         (x_stt, y_stt), 
-            x_end - x_stt, 
-            y_end - y_stt,
-            edgecolor = 'k', 
-            facecolor = 'none', 
-            linewidth = 3
-            )
+        x_end - x_stt, 
+        y_end - y_stt,
+        edgecolor = 'k', 
+        facecolor = 'none', 
+        linewidth = 3
+        )
         
         self.ax.add_patch(rect)
         
@@ -151,3 +152,5 @@ def test_plot(fname):
             row['y1'], 
             # i = indexs
             )
+        
+    return fig 

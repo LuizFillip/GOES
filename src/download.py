@@ -48,17 +48,18 @@ def dowloadGOES(dn, B = 'E'):
             
     return None 
 
-s = time()
-
-dates = pd.date_range(
-    dt.datetime(2014, 5, 1),
-    dt.datetime(2017, 12, 31), 
-    freq = '1M'
-    )
-
-for dn in dates:
-    dowloadGOES(dn, B = 'D')
-
-e = time()
-
-print((e - s)/ 3600, 'hours')
+def woon_dowload():
+    s = time()
+    
+    dates = pd.date_range(
+        dt.datetime(2014, 5, 1),
+        dt.datetime(2017, 12, 31), 
+        freq = '1M'
+        )
+    
+    for dn in dates:
+        dowloadGOES(dn, B = 'D')
+    
+    e = time()
+    
+    print((e - s)/ 3600, 'hours')

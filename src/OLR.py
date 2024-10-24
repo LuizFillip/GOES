@@ -1,153 +1,129 @@
-import xarray as xr 
-import base as b 
-import GEO as gg 
 import pandas as pd 
+import base as b 
+import numpy as np
+import GEO as gg 
 import cartopy.crs as ccrs
-import datetime as dt
-import matplotlib.pyplot as plt
-import numpy as np 
-from tqdm import tqdm 
+import matplotlib.pyplot as plt 
+import datetime as dt 
 
-lat_lims = dict(min = -40, max = 20, stp = 10)
-lon_lims = dict(min = -90, max = -30, stp = 10) 
-
-# lat_lims = dict(min = -90, max = 90, stp = 15)
-# lon_lims = dict(min = -180, max = 180, stp = 30) 
-
-
-
-def OLR_Map(df, dn, ax = None):
-    
-    if ax is None:
-        fig, ax = plt.subplots(
-             figsize = (16, 12), 
-             dpi = 300, 
-             subplot_kw = 
-             {'projection': ccrs.PlateCarree()}
-             )
-    
-    gg.map_attrs(
-        ax, dn.year, 
-        lat_lims  = lat_lims, 
-        lon_lims = lon_lims,
-        grid = False,
-        degress = None
-        )
-    
-    lon = df['lon'].values
-    lat = df['lat'].values
-    values = df['olr'].values
-    
-    levels = np.arange(70, 400, 5)
-    
-    img = ax.contourf(
-        lon,
-        lat, 
-        values, 
-        levels = levels, 
-        cmap = 'jet'
-        )
-    
-    ticks = np.arange(70, 400, 100)
-    
-    b.colorbar(
-            img, 
-            ax, 
-            ticks, 
-            label = 'OLR (Watts/$m^2$)', 
-            height = "100%", 
-            width = "3%",
-            orientation = "vertical", 
-            anchor = (.1, 0., 1, 1)
-            )
-    
-    ax.set(title = dn.strftime('%Y-%m-%d'))
-    gg.plot_rectangles_regions(ax, dn.year)
-    
-    if ax is None:
-        return fig
-    else:
-        return ax
+infile = 'GOES/data/Select_ep_data_lat_lon_2013.txt'
 
 b.config_labels()
 
 
+def plot_regions(
+        ax, 
+        x_stt, y_stt, 
+        x_end, y_end, 
+        number = None
+        ):
+    
+  
+    rect = plt.Rectangle(
+    (x_stt, y_stt), 
+    x_end - x_stt, 
+    y_end - y_stt,
+    edgecolor = 'k', 
+    facecolor = 'none', 
+    linewidth = 3
+    )
+    
+    ax.add_patch(rect)
+    
+    if number is not None:
+        middle_y = (y_end + y_stt) / 2
+        middle_x = (x_end + x_stt) / 2
+        
+        ax.text(
+            middle_x, 
+            middle_y + 1, number, 
+            transform = ax.transData
+            )
+    return ax 
 
-
-def dataset_to_dataframe(df):
+def tracker_plot(ds):
+    fig, ax = plt.subplots(
+        dpi = 300, 
+        figsize = (10, 10),
+        subplot_kw = 
+        {'projection': ccrs.PlateCarree()}
+        )
     
-    df = df.to_dataframe()
+    lat_lims = dict(min = -40, max = 20, stp = 10)
+    lon_lims = dict(min = -90, max = -30, stp = 10) 
     
-    df['lon'] = df.index.get_level_values(1)
-    df['lat'] = df.index.get_level_values(0)
+    gg.map_attrs(
+       ax, 2013, 
+       lat_lims = lat_lims, 
+       lon_lims = lon_lims,
+       grid = False,
+       degress = None
+        )
     
-    df.index = df['time']
+    for index, row in ds.iterrows():
+        
+        plot_regions(
+            ax,
+            row['x0'], 
+            row['y0'],
+            row['x1'], 
+            row['y1'], 
+            # i = indexs
+            )
+        
+        ax.scatter(row['mx'], row['my'], s = 100, color = 'red')
+    return ax 
+def load_tunde(infile):
+    df = pd.read_csv(infile, delim_whitespace=True)
     
-    del df['time']
+    df.index = pd.to_datetime(
+        df['Date'] + ' ' + 
+        df[['Hour', 'Minute', 'Second']
+           ].astype(str).agg(':'.join, axis=1))
+    
+    df = df.drop(
+        columns = [
+        'Year', 'DOY', 'Date', 
+        'Hour', 'Minute', 'Second']
+        )
     
     return df
 
+def tracker_clouds(ds):
+    times = pd.to_datetime(np.unique(ds.index))
 
-
-def sel_sector(df, sector , year,  step = 0.5):
-
-    corners = gg.set_coords(year)
+    ds = ds.loc[ds['area'] > 50]
+    i = 0
+    ds1 = ds.loc[ds.index == times[i]]
     
-    xlim, ylim = corners[sector]
+    ds2 = ds.loc[ds.index == times[i + 1]]
     
-    return df.sel(
-        lon = slice(xlim[0] - step, xlim[1] + step), 
-        lat = slice(ylim[0] - step, ylim[1] + step)
-        )
-
-
-def sel_sector2(df, sector , year,  step = 0.5):
-
-    corners = gg.set_coords(year)
+    for i, s1 in enumerate(ds1['mx'].values):
+        for j, s2 in  enumerate(ds2['mx'].values):
+            if abs(s1 - s2) < 1:
+                print(ds1.iloc[i, :], ds2.iloc[j, :],)
     
-    xlim, ylim = corners[sector]
+
+# df = load_tunde(infile)
+# for index, row in df1.iterrows():
     
-    return df.sel(
-        lon = slice(xlim[0] - step, xlim[1] + step), 
-        lat = slice(ylim[1] - step, ylim[0] + step)
-        )
+# df1['mean_90_110'].max()
+# df['mean_90_110'].resample('15D').mean().plot()
 
 
-def interpol_data(ds):
+ds = b.load('test_goes')
+
+dn = dt.datetime(2013, 1, 2)
+delta = dt.timedelta(days = 1)
+ds = ds.loc[(ds.index > dn) & (ds.index < dn + delta)]
+
+ds['mx'] = (ds['x1'] + ds['x0']) / 2
+ds['my'] = (ds['y1'] + ds['y0']) / 2
 
 
-    
-    new_lon = np.linspace(ds.lon[0], ds.lon[-1], 360)
-    
-    new_lat = np.linspace(ds.lat[0], ds.lat[-1], 180)
-    
-    ds = ds.interp(lat = new_lat, lon = new_lon)
 
-def get_avg(ds):
-    out = {}
-    dn = pd.to_datetime(ds['time'].values)
-    
-    for sector in np.arange(-80, -40, 10):
-        df = sel_sector2(ds, sector, dn.year)
-        
-        out[sector] = df['olr'].mean().values
-        
-    return pd.DataFrame(out, index = [dn])
-    
-# 
+ax = tracker_plot(ds)
 
-def runnig_by_days(ds, year):
-    
-    out = []
-    print('starting', year)
-    for day in tqdm(range(365)):
-        
-        delta = dt.timedelta(days = day)
-        
-        dn = dt.datetime(year, 1, 1) + delta
-            
-        out.append(get_avg(ds.sel(time = dn)))
-         
-    return pd.concat(out)
+ax.set(title = dn)
 
-
+# ds
