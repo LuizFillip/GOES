@@ -113,7 +113,7 @@ def tracker_clouds(ds):
 
 ds = b.load('test_goes')
 
-dn = dt.datetime(2013, 1, 2)
+dn = dt.datetime(2013, 1, 1)
 delta = dt.timedelta(days = 1)
 ds = ds.loc[(ds.index > dn) & (ds.index < dn + delta)]
 
@@ -122,8 +122,37 @@ ds['my'] = (ds['y1'] + ds['y0']) / 2
 
 
 
-ax = tracker_plot(ds)
 
-ax.set(title = dn)
+orig_df = ds.loc[ds['area'] > 30]
 
-# ds
+# orig_df = orig_df.sort_values(by=['mx', 'my'])
+
+
+
+# ax.set(title = dn)
+
+df = orig_df.copy() 
+
+df['dmx'] =  df['mx'].diff().abs()
+df['dmy'] =  df['my'].diff().abs()
+
+# df = df.iloc[:, 4:]
+threshold = 3
+df_gt = df[(df['dmy'] > threshold) | (df['dmx'] >  threshold)]
+
+colors = b.basic_colors
+# t = df_gt.index
+# times = [t[0]]
+# times.extend(df_gt.index)
+
+# for i in range(len(times) - 1):
+    
+#     such = orig_df.loc[
+#         (orig_df.index > times[i]) &
+#         (orig_df.index < times[i + 1])
+#         ]
+#     print(such) 
+dn = dt.datetime(2013, 1, 1, 6, 30)
+
+
+ax = tracker_plot(df.loc[df.index <= dn])
