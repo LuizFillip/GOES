@@ -15,7 +15,8 @@ def plot_regions(
         ax, 
         x_stt, y_stt, 
         x_end, y_end, 
-        number = None
+        number = None, 
+        color = 'k'
         ):
     
   
@@ -23,7 +24,7 @@ def plot_regions(
     (x_stt, y_stt), 
     x_end - x_stt, 
     y_end - y_stt,
-    edgecolor = 'k', 
+    edgecolor = color, 
     facecolor = 'none', 
     linewidth = 3
     )
@@ -41,13 +42,8 @@ def plot_regions(
             )
     return ax 
 
-def tracker_plot(ds):
-    fig, ax = plt.subplots(
-        dpi = 300, 
-        figsize = (10, 10),
-        subplot_kw = 
-        {'projection': ccrs.PlateCarree()}
-        )
+def tracker_plot(ax, ds, color = 'k'):
+   
     
     lat_lims = dict(min = -40, max = 20, stp = 10)
     lon_lims = dict(min = -90, max = -30, stp = 10) 
@@ -68,10 +64,12 @@ def tracker_plot(ds):
             row['y0'],
             row['x1'], 
             row['y1'], 
-            # i = indexs
+            color = color
             )
         
-        ax.scatter(row['mx'], row['my'], s = 100, color = 'red')
+        mx = (row['x1'] + row['x0']) / 2
+        my = (row['y1'] + row['y0']) / 2
+        ax.scatter(mx, my, s = 100, color = 'red')
     return ax 
 def load_tunde(infile):
     df = pd.read_csv(infile, delim_whitespace=True)
@@ -113,46 +111,79 @@ def tracker_clouds(ds):
 
 ds = b.load('test_goes')
 
-dn = dt.datetime(2013, 1, 1)
+dn = dt.datetime(2013, 1, 5)
 delta = dt.timedelta(days = 1)
 ds = ds.loc[(ds.index > dn) & (ds.index < dn + delta)]
 
-ds['mx'] = (ds['x1'] + ds['x0']) / 2
-ds['my'] = (ds['y1'] + ds['y0']) / 2
 
+orig_df = ds.loc[ds['area'] > 10]
 
-
-
-orig_df = ds.loc[ds['area'] > 30]
-
-# orig_df = orig_df.sort_values(by=['mx', 'my'])
-
-
-
-# ax.set(title = dn)
 
 df = orig_df.copy() 
 
-df['dmx'] =  df['mx'].diff().abs()
-df['dmy'] =  df['my'].diff().abs()
+def coord_diff_on_data(df):
 
-# df = df.iloc[:, 4:]
-threshold = 3
-df_gt = df[(df['dmy'] > threshold) | (df['dmx'] >  threshold)]
-
-colors = b.basic_colors
-# t = df_gt.index
-# times = [t[0]]
-# times.extend(df_gt.index)
-
-# for i in range(len(times) - 1):
+    df['dx0'] =  df['x0'].diff().abs()
+    df['dy0'] =  df['y0'].diff().abs()
+    df['dx1'] =  df['x1'].diff().abs()
+    df['dy1'] =  df['y1'].diff().abs()
     
-#     such = orig_df.loc[
-#         (orig_df.index > times[i]) &
-#         (orig_df.index < times[i + 1])
-#         ]
-#     print(such) 
-dn = dt.datetime(2013, 1, 1, 6, 30)
+    df = df.replace(np.nan, 0)
+    
+    mask = (df[['dx0', 'dy0', 'dx1', 'dy1']] < 1).sum(axis=1) >= 4
+    
+    df_filtered = df[mask].copy()
+    
+    df_filtered['time_diff'] = df_filtered.index.to_series(
+            ).diff().fillna(
+        pd.Timedelta(seconds=0)
+        )
+    return df_filtered
+
+def sequentioal_blocks(df):
+    
+    df_filtered = coord_diff_on_data(df)
+    intervalo_max = pd.Timedelta(hours=0.5)
+    
+    bloco_atual = []
+    blocos_sequenciais = []
+    
+    for i, (time, row) in enumerate(df_filtered.iterrows()):
+        if i == 0 or row['time_diff'] <= intervalo_max:
+            bloco_atual.append(row)
+        else:
+            # Se não for sequencial, salva o bloco atual e começa um novo
+            if bloco_atual:
+                blocos_sequenciais.append(pd.DataFrame(bloco_atual))
+            bloco_atual = [row]
+    
+    # Adiciona o último bloco se não estiver vazio
+    if bloco_atual:
+        blocos_sequenciais.append(pd.DataFrame(bloco_atual))
+    
+    for bloco in blocos_sequenciais:
+        bloco.drop(columns=['time_diff'], inplace=True)
+    
+
+# fig, ax = plt.subplots(
+#      dpi = 300, 
+#      figsize = (10, 10),
+#      subplot_kw = 
+#      {'projection': ccrs.PlateCarree()}
+#      )
+
+# import matplotlib
+
+    
+# colors = list(matplotlib.colors.cnames.keys())
+
+# colors = [c for c in colors if 'dark' in c]
 
 
-ax = tracker_plot(df.loc[df.index <= dn])
+# colors
+
+# for i, bloco in enumerate(blocos_sequenciais):
+#     # tracker_plot(ax, bloco, color = colors[i])
+    
+    
+# # blocos_sequenciais
