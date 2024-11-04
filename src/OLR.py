@@ -109,19 +109,8 @@ def tracker_clouds(ds):
 # df['mean_90_110'].resample('15D').mean().plot()
 
 
-ds = b.load('test_goes')
 
-dn = dt.datetime(2013, 1, 5)
-delta = dt.timedelta(days = 1)
-ds = ds.loc[(ds.index > dn) & (ds.index < dn + delta)]
-
-
-orig_df = ds.loc[ds['area'] > 10]
-
-
-df = orig_df.copy() 
-
-def coord_diff_on_data(df):
+def coord_diff_on_data(df, threshold = 2):
 
     df['dx0'] =  df['x0'].diff().abs()
     df['dy0'] =  df['y0'].diff().abs()
@@ -130,17 +119,28 @@ def coord_diff_on_data(df):
     
     df = df.replace(np.nan, 0)
     
-    mask = (df[['dx0', 'dy0', 'dx1', 'dy1']] < 1).sum(axis=1) >= 4
+    cols = ['dx0', 'dy0', 'dx1', 'dy1']
+    mask = (df[cols] < 1).sum(axis=1) >= 4
     
-    df_filtered = df[mask].copy()
+    df_filt = df[mask].copy()
     
-    df_filtered['time_diff'] = df_filtered.index.to_series(
+    rt = df_filt.index.to_series(
             ).diff().fillna(
-        pd.Timedelta(seconds=0)
+        pd.Timedelta(seconds = 0)
         )
-    return df_filtered
+    
+    df_filt['dtime'] =  (
+        rt.dt.components['hours'] +      
+        rt.dt.components['minutes'] / 60       
+        )     
+                   
+    df_filt['group'] = (
+        df_filt['dtime'] >= threshold
+        ).cumsum()
+    
+    return df_filt.iloc[:, 4:]
 
-def sequentioal_blocks(df):
+def sequential_blocks(df):
     
     df_filtered = coord_diff_on_data(df)
     intervalo_max = pd.Timedelta(hours=0.5)
@@ -156,13 +156,15 @@ def sequentioal_blocks(df):
             if bloco_atual:
                 blocos_sequenciais.append(pd.DataFrame(bloco_atual))
             bloco_atual = [row]
-    
-    # Adiciona o último bloco se não estiver vazio
+     
+
     if bloco_atual:
         blocos_sequenciais.append(pd.DataFrame(bloco_atual))
     
     for bloco in blocos_sequenciais:
-        bloco.drop(columns=['time_diff'], inplace=True)
+        bloco.drop(columns=['time_diff'], inplace = True)
+        
+    return blocos_sequenciais
     
 
 # fig, ax = plt.subplots(
@@ -172,18 +174,86 @@ def sequentioal_blocks(df):
 #      {'projection': ccrs.PlateCarree()}
 #      )
 
-# import matplotlib
+def filter_region(df, sector, year = 2013):
+    '''filter region'''
+    corners = gg.set_coords(year)
+
+    xlim, ylim = corners[sector]
+    
+    return df.loc[
+        (df['x0'] > xlim[0]) & 
+        (df['x1'] < xlim[1]) & 
+        (df['y0'] > ylim[0]) & 
+        (df['y1'] < ylim[1])
+        ]
+
+
+def built_area_locator_time(df, sector):
+    
+    start_time = df.index.min()
+    end_time = df.index.max()
+    area_sum = df['area'].mean()
+    time_sum = df['dtime'].sum()
+    
+    result = {
+        'time': time_sum, 
+        'area': area_sum, 
+        'start': start_time, 
+        'end': end_time, 
+        'sector': sector
+        }
+    
+    dn = [start_time.date()]
+    
+    return pd.DataFrame(result, index = dn)
+
+
+
+
+def group_of_convective_storms(ds):
+    
+    out = []
+    for sector in np.arange(-80, -40, 10):
+    
+        df1 = coord_diff_on_data(
+            filter_region(ds, sector).copy()
+            )
+               
+        valid_intervals = df1[df1['dtime'] < 2].groupby('group')
+    
+        for group_id, group_df in valid_intervals:
+            
+            out.append(
+                built_area_locator_time(
+                    group_df, sector
+                    )
+                )
+            
+    return pd.concat(out)
+
+from tqdm import tqdm 
+
+ds = b.load('test_goes')
+
+ds = ds.loc[~(ds['area'] > 1000)]
+delta = dt.timedelta(days = 1)
+
+
+times = pd.date_range('2013-01-01', '2017-12-31')
+
+out = []
+for dn in tqdm(times):
+    ds1 = ds.loc[(ds.index > dn) & (ds.index < dn + delta)]
+    try:
+        out.append(group_of_convective_storms(ds1))
+    except:
+        continue
+    
+df = pd.concat(out)
+
+#%%%%
+
+
+df.to_csv('nucleos')
 
     
-# colors = list(matplotlib.colors.cnames.keys())
-
-# colors = [c for c in colors if 'dark' in c]
-
-
-# colors
-
-# for i, bloco in enumerate(blocos_sequenciais):
-#     # tracker_plot(ax, bloco, color = colors[i])
-    
-    
-# # blocos_sequenciais

@@ -2,46 +2,35 @@ import base as b
 import numpy as np 
 import pandas as pd
 import GEO as gg
+import datetime as dt
 
 
-def filter_region(df, year, sector):
-    '''filter region'''
-    corners = gg.set_coords(year)
+df = b.load('nucleos')
 
-    xlim, ylim = corners[sector]
-    
-    return df.loc[
-        (df.lon > xlim[0]) & 
-        (df.lon < xlim[1]) & 
-        (df.lat > ylim[0]) & 
-        (df.lat < ylim[1])
-        ]
+df['start'] = pd.to_datetime(df['start'])
 
+df = df.loc[
+    (df['start'].dt.time < dt.time(6, 0)) |
+    (df['start'].dt.time > dt.time(21, 0)) |
+    (df['area'] > 20)
+            ]
+
+df['month'] = df.index.month
 
 
-def get_mean_sum(df, dn):
-    
-    out_mean = {}
-    
-    for sector in np.arange(-80, -40, 10):
-        
-        ds = filter_region(df, dn.year, sector)
- 
-        data = ds['temp'].values
-     
-        out_mean[sector] = np.nanmean(data)
+ds = df.groupby(
+    ['month', 'sector']
+    ).size().reset_index(name='occs')
 
-    return pd.DataFrame(out_mean, index = [dn])
+ds = pd.pivot_table(
+    ds, 
+    columns = 'sector', 
+    index = 'month', 
+    values = 'occs'
+    )
 
 
-import base as b 
+ds.plot(kind = 'bar', figsize = (12, 8))
 
-df = b.load('test_goes')
 
-df = df.loc[df['area'] > 10]
-# df = df.between_time('22:00', '06:00')
-# ds = df.resample('1H').count()
-
-# ds['area'].plot(figsize = (12, 6))
-
-df
+df 
