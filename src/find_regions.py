@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.ndimage import label, find_objects
+import GOES as gs 
 
 
 def plot_data_foo(fname):
-    ds = CloudyTemperature(fname)
+    ds = gs.CloudyTemperature(fname)
     data = ds.data[::-1]
     lons = ds.lon 
     lats = ds.lat
@@ -18,7 +18,7 @@ def plot_data_foo(fname):
     
     data = np.where(data > -60, np.nan, data)
     
-    find_nucleos(
+    gs.find_nucleos(
             data, 
             lons, 
             lats[::-1],
@@ -27,7 +27,7 @@ def plot_data_foo(fname):
             step = 0.5
             )
     
-    ax.set(title = fname2date(fname))
+    ax.set(title = gs.fname2date(fname))
     return fig 
     
 

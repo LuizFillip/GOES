@@ -4,8 +4,7 @@ import pandas as pd
 import datetime as dt 
 from tqdm import tqdm 
 import os 
-from scipy.ndimage import label, find_objects
-import GOES as gs
+import xarray as xr
 
 
 
@@ -137,106 +136,4 @@ def CloudTopKeogram(files, lon = -55):
         )
 
 
-def find_nucleos(
-        data, 
-        lons, 
-        lats,
-        area_treshold = 1,
-        by_indexes = True
-        ):
-        
-    lab_array, num_features = label(~np.isnan(data))
-        
-    ymax, xmax = data.shape
-    
-    out = []
-    for i, region in enumerate(find_objects(lab_array)):
-       
-        x_stt, x_end = region[1].start, region[1].stop
-        y_stt, y_end = region[0].start, region[0].stop
-        
-        if by_indexes:
-            if (x_end == xmax):
-                x_end = -1
-            if (y_end == ymax):
-                y_end = -1
-            
-            x_stt, x_end = lons[x_stt], lons[x_end]
-            y_stt, y_end = lats[y_stt], lats[y_end] 
-        
-        area = abs((y_end - y_stt) * (x_end - x_stt))
-        
-        if area > area_treshold:
-            out.append([x_stt, x_end, y_stt, y_end, area])
-            
-    columns = ['x0', 'x1', 'y0', 'y1', 'area']
-    return pd.DataFrame(out, columns = columns)
-        
-
-def nucleos_catalog(fname):
-    
-    ds = CloudyTemperature(fname)
-    data = ds.data[::-1]
-    lons = ds.lon 
-    lats = ds.lat
-    
-    data = np.where(data > -60, np.nan, data)
-    
-    ds = find_nucleos(
-            data, 
-            lons, 
-            lats[::-1]
-            )
-
-    ds['time'] = fname2date(fname)
-    
-    return ds.set_index('time')
-
-
-
-
-def goes_path(dn, b = 'E'):
-    
-    mn = dn.strftime("%m")
-    yr = dn.strftime("%Y")
-    return f'{b}:\\database\\goes\\{yr}\\{mn}\\'
-    
-
-def walk_goes(dn, b = 'E'):
-    
-    path = goes_path(dn, b)
-    
-    return [os.path.join(path, f) for f in os.listdir(path)]
-
-
-def run_nucleos(dn, b = 'E'):
-    io = dn.strftime('%Y-%m')
-    out = []
-    for file in tqdm(walk_goes(dn, b), io):
-        
-        out.append(nucleos_catalog(file))
-        
-    return pd.concat(out)
-
-
-dates = pd.date_range(
-    dt.datetime(2013, 1, 1),
-    dt.datetime(2013, 12, 31), 
-    freq = '1M'
-    )
-
-def start_process(dates):
-    out = []
-    for dn in dates:
-       
-        out.append(run_nucleos(dn, b = 'D'))
-        
-        
-    df = pd.concat(out)
-    
-    df.to_csv('test_goes') 
-    
-import xarray as xr 
-
-fname = 'GOES/data/S10635346_201801010000.nc'
 

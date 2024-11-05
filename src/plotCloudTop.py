@@ -21,6 +21,7 @@ class plotTopCloud(object):
             data, 
             lons, 
             lats, 
+            fig = None, 
             figsize = (12, 10)
             ):
         
@@ -28,22 +29,27 @@ class plotTopCloud(object):
         self.lons = lons
         self.lats = lats 
         
-        self.fig, self.ax = plt.subplots(
-            dpi = 300, 
-            figsize = figsize, 
-            subplot_kw = 
-            {'projection': ccrs.PlateCarree()}
-            )
+        if (fig is None):
+            self.fig, self.ax = plt.subplots(
+                dpi = 300, 
+                figsize = figsize, 
+                subplot_kw = 
+                {'projection': ccrs.PlateCarree()}
+                )
+            
+    def contour(self, ax):
         
-        
-        self.img = self.ax.imshow(
-            data,
+        img = ax.imshow(
+            self.data,
             aspect = 'auto', 
-            extent = [lons[0], lons[-1], lats[0], lats[-1]],
+            extent = [self.lons[0], self.lons[-1], 
+                      self.lats[0], self.lats[-1]],
             cmap = goes_cmap(), 
             vmin = -100, 
             vmax = 100
             )
+        
+        return img 
     
     @property 
     def figure_axes(self):
@@ -51,6 +57,7 @@ class plotTopCloud(object):
     
     def colorbar(
             self, 
+            img, ax,
             orientation = "vertical", 
             step = 20
             ):
@@ -67,8 +74,8 @@ class plotTopCloud(object):
             anchor = (.1, 0., 1, 1)
             
         b.colorbar(
-               self.img, 
-               self.ax, 
+               img, 
+               ax, 
                ticks, 
                label = 'Temperature (°C)', 
                height = height, 
@@ -86,14 +93,14 @@ class plotTopCloud(object):
             
         return None 
     
-    def add_map(self):
+    def add_map(self, ax):
        
       
         lat_lims = dict(min = -40, max = 20, stp = 10)
         lon_lims = dict(min = -90, max = -30, stp = 10) 
 
         gg.map_attrs(
-            self.ax, 2013, 
+            ax, 2013, 
             lat_lims  = lat_lims, 
             lon_lims = lon_lims,
             grid = False,
@@ -109,12 +116,12 @@ class plotTopCloud(object):
         
       
         rect = plt.Rectangle(
-        (x_stt, y_stt), 
-        x_end - x_stt, 
-        y_end - y_stt,
-        edgecolor = 'k', 
-        facecolor = 'none', 
-        linewidth = 3
+            (x_stt, y_stt), 
+            x_end - x_stt, 
+            y_end - y_stt,
+            edgecolor = 'k', 
+            facecolor = 'none', 
+            linewidth = 3
         )
         
         self.ax.add_patch(rect)
@@ -128,21 +135,32 @@ class plotTopCloud(object):
                 middle_y + 1, number, 
                 transform = self.ax.transData
                 )
-
+            
+        return None 
 
 
 def test_plot(fname):
     ds = gs.CloudyTemperature(fname)
-    ptc = gs.plotTopCloud(ds.data, ds.lons, ds.lats)
+    
+    dat, lon, lat = ds.data[::-1], ds.lon, ds.lat
+    dn =  ds.dn
+    
+    ptc = gs.plotTopCloud(dat, lon, lat)
     
     ptc.add_map()
     ptc.colorbar()
     
     fig, ax = ptc.figure_axes 
     
-    ax.set(title = gs.fname2date(fname))
+    ax.set(title = dn)
     
-    
+    ds =  gs.find_nucleos(
+              dat, 
+              lon, 
+              lat[::-1],
+              dn 
+             
+              )
     for index, row in ds.iterrows():
         
         ptc.plot_regions(

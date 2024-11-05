@@ -38,7 +38,7 @@ def dowloadGOES(dn, B = 'E'):
     
     for href in tqdm(wb.request(url), info):
         
-        if href.endswith('gz'):
+        if href.endswith('gz') or href.endswith('nc'):
             
             wb.download(
                 url, 
@@ -52,8 +52,8 @@ def woon_dowload():
     s = time()
     
     dates = pd.date_range(
-        dt.datetime(2014, 5, 1),
-        dt.datetime(2017, 12, 31), 
+        dt.datetime(2018, 1, 4),
+        dt.datetime(2019, 12, 31), 
         freq = '1M'
         )
     
@@ -63,3 +63,10 @@ def woon_dowload():
     e = time()
     
     print((e - s)/ 3600, 'hours')
+    
+    
+# dn = dt.datetime(2016, 3, 5)
+# dowloadGOES(dn, B = 'E')
+
+
+# woon_dowload()

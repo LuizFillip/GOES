@@ -5,6 +5,7 @@ import GEO as gg
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt 
 import datetime as dt 
+from tqdm import tqdm 
 
 infile = 'GOES/data/Select_ep_data_lat_lon_2013.txt'
 
@@ -21,12 +22,12 @@ def plot_regions(
     
   
     rect = plt.Rectangle(
-    (x_stt, y_stt), 
-    x_end - x_stt, 
-    y_end - y_stt,
-    edgecolor = color, 
-    facecolor = 'none', 
-    linewidth = 3
+        (x_stt, y_stt), 
+        x_end - x_stt, 
+        y_end - y_stt,
+        edgecolor = color, 
+        facecolor = 'none', 
+        linewidth = 3
     )
     
     ax.add_patch(rect)
@@ -71,6 +72,8 @@ def tracker_plot(ax, ds, color = 'k'):
         my = (row['y1'] + row['y0']) / 2
         ax.scatter(mx, my, s = 100, color = 'red')
     return ax 
+
+
 def load_tunde(infile):
     df = pd.read_csv(infile, delim_whitespace=True)
     
@@ -87,19 +90,7 @@ def load_tunde(infile):
     
     return df
 
-def tracker_clouds(ds):
-    times = pd.to_datetime(np.unique(ds.index))
 
-    ds = ds.loc[ds['area'] > 50]
-    i = 0
-    ds1 = ds.loc[ds.index == times[i]]
-    
-    ds2 = ds.loc[ds.index == times[i + 1]]
-    
-    for i, s1 in enumerate(ds1['mx'].values):
-        for j, s2 in  enumerate(ds2['mx'].values):
-            if abs(s1 - s2) < 1:
-                print(ds1.iloc[i, :], ds2.iloc[j, :],)
     
 
 # df = load_tunde(infile)
@@ -231,29 +222,29 @@ def group_of_convective_storms(ds):
             
     return pd.concat(out)
 
-from tqdm import tqdm 
 
-ds = b.load('test_goes')
-
-ds = ds.loc[~(ds['area'] > 1000)]
-delta = dt.timedelta(days = 1)
-
-
-times = pd.date_range('2013-01-01', '2017-12-31')
-
-out = []
-for dn in tqdm(times):
-    ds1 = ds.loc[(ds.index > dn) & (ds.index < dn + delta)]
-    try:
-        out.append(group_of_convective_storms(ds1))
-    except:
-        continue
+def run_years_convective():
     
-df = pd.concat(out)
+    ds = b.load('test_goes')
+    
+    ds = ds.loc[~(ds['area'] > 1000)]
+    delta = dt.timedelta(days = 1)
+    
+    times = pd.date_range('2013-01-01', '2017-12-31')
+    
+    out = []
+    for dn in tqdm(times):
+        ds1 = ds.loc[(ds.index > dn) & (ds.index < dn + delta)]
+        try:
+            out.append(group_of_convective_storms(ds1))
+        except:
+            continue
+        
+    return pd.concat(out)
+    
+    
 
-#%%%%
 
-
-df.to_csv('nucleos')
+# df.to_csv('nucleos')
 
     
