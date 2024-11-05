@@ -93,13 +93,6 @@ def load_tunde(infile):
 
     
 
-# df = load_tunde(infile)
-# for index, row in df1.iterrows():
-    
-# df1['mean_90_110'].max()
-# df['mean_90_110'].resample('15D').mean().plot()
-
-
 
 def coord_diff_on_data(df, threshold = 2):
 
@@ -225,7 +218,7 @@ def group_of_convective_storms(ds):
 
 def run_years_convective():
     
-    ds = b.load('test_goes')
+    ds = b.load('test_goes2')
     
     ds = ds.loc[~(ds['area'] > 1000)]
     delta = dt.timedelta(days = 1)
@@ -234,7 +227,8 @@ def run_years_convective():
     
     out = []
     for dn in tqdm(times):
-        ds1 = ds.loc[(ds.index > dn) & (ds.index < dn + delta)]
+        ds1 = ds.loc[(ds.index > dn) & 
+                     (ds.index < dn + delta)]
         try:
             out.append(group_of_convective_storms(ds1))
         except:
@@ -243,8 +237,15 @@ def run_years_convective():
     return pd.concat(out)
     
     
+df = run_years_convective()
 
-
-# df.to_csv('nucleos')
+df.to_csv('nucleos2')
 
     
+# df = load_tunde(infile)
+# for index, row in df1.iterrows():
+    
+# df1['mean_90_110'].max()
+# df['mean_60_90'].resample('15D').mean().plot(figsize = (15, 8))
+
+

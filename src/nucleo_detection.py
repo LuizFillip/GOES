@@ -55,7 +55,7 @@ def find_nucleos(
 def nucleos_catalog(fname):
     
     ds = gs.CloudyTemperature(fname)
-    data = ds.data[::-1]
+    data = ds.data
     lons = ds.lon 
     lats = ds.lat
     
@@ -97,7 +97,7 @@ def run_nucleos(dn, b = 'E'):
 
 dates = pd.date_range(
     dt.datetime(2013, 1, 1),
-    dt.datetime(2013, 12, 31), 
+    dt.datetime(2017, 12, 31), 
     freq = '1M'
     )
 
@@ -106,11 +106,11 @@ def start_process(dates):
     for dn in dates:
        
         out.append(run_nucleos(dn, b = 'D'))
-        
-        
+
     df = pd.concat(out)
     
-    df.to_csv('test_goes') 
+    df.to_csv('test_goes2') 
     
+start_process(dates)
 
-fname = 'GOES/data/S10635346_201801010000.nc'
+# fname = 'GOES/data/S10635346_201801010000.nc'

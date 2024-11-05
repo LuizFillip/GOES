@@ -109,6 +109,7 @@ class plotTopCloud(object):
 
     def plot_regions(
             self, 
+            ax,
             x_stt, y_stt, 
             x_end, y_end, 
             number = None
@@ -124,16 +125,16 @@ class plotTopCloud(object):
             linewidth = 3
         )
         
-        self.ax.add_patch(rect)
+        ax.add_patch(rect)
         
         if number is not None:
             middle_y = (y_end + y_stt) / 2
             middle_x = (x_end + x_stt) / 2
             
-            self.ax.text(
+            ax.text(
                 middle_x, 
                 middle_y + 1, number, 
-                transform = self.ax.transData
+                transform = ax.transData
                 )
             
         return None 
