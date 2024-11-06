@@ -52,7 +52,7 @@ def woon_dowload():
     s = time()
     
     dates = pd.date_range(
-        dt.datetime(2018, 1, 4),
+        dt.datetime(2018, 7, 4),
         dt.datetime(2019, 12, 31), 
         freq = '1M'
         )
@@ -65,8 +65,8 @@ def woon_dowload():
     print((e - s)/ 3600, 'hours')
     
     
-# dn = dt.datetime(2016, 3, 5)
+# dn = dt.datetime(2018, 1, 1)
 # dowloadGOES(dn, B = 'E')
 
 
-# woon_dowload()
+woon_dowload()

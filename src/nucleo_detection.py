@@ -67,10 +67,6 @@ def nucleos_catalog(fname):
             )
 
     return ds 
-
-
-
-
 def goes_path(dn, b = 'E'):
     
     mn = dn.strftime("%m")
@@ -111,6 +107,8 @@ def start_process(dates):
     
     df.to_csv('test_goes2') 
     
-start_process(dates)
+# start_process(dates)
 
 # fname = 'GOES/data/S10635346_201801010000.nc'
+
+
