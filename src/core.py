@@ -38,7 +38,10 @@ def read_dataset(fname):
 
 def fname2date(fname):
     dn = fname.split('_')[-1][:-3]
-    return dt.datetime.strptime(dn, '%Y%m%d%H%M')
+    try:
+        return dt.datetime.strptime(dn, '%Y%m%d%H%M')
+    except:
+        return dt.datetime.strptime(dn, '%Y%m%d%H%M%S')
 
 
 

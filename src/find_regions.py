@@ -1,53 +1,43 @@
-import numpy as np
+import os
 import matplotlib.pyplot as plt
 import GOES as gs 
+import datetime as dt 
+from tqdm import tqdm 
+import base as b 
 
 
-def plot_data_foo(fname):
-    ds = gs.CloudyTemperature(fname)
-    data = ds.data[::-1]
-    lons = ds.lon 
-    lats = ds.lat
-    
-    ptc = gs.plotTopCloud(data, lons, lats)
-    
-    ptc.add_map()
-    ptc.colorbar()
-    
-    fig, ax = ptc.figure_axes 
-    
-    data = np.where(data > -60, np.nan, data)
-    
-    gs.find_nucleos(
-            data, 
-            lons, 
-            lats[::-1],
-            ax,
-            area_treshold = 60,
-            step = 0.5
-            )
-    
-    ax.set(title = gs.fname2date(fname))
-    return fig 
-    
-
-def save_maps():
+def save_maps(ref_day):
     path = 'E:\\database\\nucleos\\'
     
-    ref_day = dt.datetime(2013, 1, 5)
-    files = load_files(ref_day)
-    
+    infile = 'E:\\database\\goes\\2019\\04\\'
+   
+    files = os.listdir(infile)
+       
     for fname in tqdm(files, 'saving'):
         
         plt.ioff()
-    
-        dn = fname2date(fname)
+            
+        fig = gs.test_plot(infile + fname, temp = -30)
         
-        fig = plot_data_foo(fname)
-        
-        FigureName = dn.strftime('%Y%m%d%H%M')
+        FigureName = fname.split('_')[1][:-3]
         
         fig.savefig(path + FigureName, dpi = 100)
         
         plt.clf()   
         plt.close()
+        
+
+    
+    b.images_to_movie(
+            path, 
+            path_out = '',
+            movie_name = 'goes',
+            fps = 5, 
+            ext = 'png'
+            )
+
+
+
+ref_day = dt.datetime(2019, 4, 1)
+
+save_maps(ref_day)

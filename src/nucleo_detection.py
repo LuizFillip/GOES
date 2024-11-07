@@ -111,4 +111,5 @@ def start_process(dates):
 
 # fname = 'GOES/data/S10635346_201801010000.nc'
 
+fname = 'S10635346_201904011030.nc'
 

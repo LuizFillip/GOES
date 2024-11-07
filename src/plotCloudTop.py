@@ -37,6 +37,7 @@ class plotTopCloud(object):
                 {'projection': ccrs.PlateCarree()}
                 )
             
+           
     def contour(self, ax):
         
         img = ax.imshow(
@@ -106,6 +107,7 @@ class plotTopCloud(object):
             grid = False,
             degress = None
             )
+        return lat_lims, lon_lims
 
     def plot_regions(
             self, 
@@ -140,37 +142,51 @@ class plotTopCloud(object):
         return None 
 
 
-def test_plot(fname):
+def test_plot(fname, temp = -30):
+    
+    fig, ax = plt.subplots(
+        dpi = 300, 
+        figsize = (10, 10), 
+        subplot_kw = 
+        {'projection': ccrs.PlateCarree()}
+        )
+    
     ds = gs.CloudyTemperature(fname)
     
-    dat, lon, lat = ds.data[::-1], ds.lon, ds.lat
+    dat, lon, lat = ds.data, ds.lon, ds.lat
     dn =  ds.dn
     
-    ptc = gs.plotTopCloud(dat, lon, lat)
-    
-    ptc.add_map()
-    ptc.colorbar()
-    
-    fig, ax = ptc.figure_axes 
-    
+    ptc = plotTopCloud(dat, lon, lat, fig)
+    img = ptc.contour(ax)
+    ptc.add_map(ax)
+    ptc.colorbar(img, ax)
+        
     ax.set(title = dn)
     
-    ds =  gs.find_nucleos(
+    nl =  gs.find_nucleos(
               dat, 
               lon, 
               lat[::-1],
-              dn 
+              ds.dn,
+              temp_threshold = temp,
              
               )
-    for index, row in ds.iterrows():
-        
+    count = 0
+    for index, row in nl.iterrows():
+        count += 1
         ptc.plot_regions(
+            ax,
             row['x0'], 
             row['y0'],
             row['x1'], 
             row['y1'], 
+            # number = count
             # i = indexs
             )
         
     return fig 
 
+# fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904011030.nc'
+
+
+# fig = test_plot(fname)

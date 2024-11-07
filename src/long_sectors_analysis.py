@@ -1,7 +1,6 @@
 import base as b 
 import core as c 
 import pandas as pd
-import GEO as gg
 import datetime as dt
 import PlasmaBubbles as pb 
 import matplotlib.pyplot as plt 
@@ -52,8 +51,7 @@ def number_of_nucleos(sector):
     ds = ds.replace(float('nan'), 0)
     
     ds.index = pd.to_datetime(ds.index)
-    
-    
+
     return ds.loc[:, [sector]].astype(int)
 
 
@@ -166,4 +164,4 @@ def split_in_sector():
 
 # ds.plot(lw = 3, subplots = True)
 
-plot_scatter_correlation()
+# plot_scatter_correlation()

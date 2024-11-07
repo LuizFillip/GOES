@@ -52,7 +52,7 @@ def woon_dowload():
     s = time()
     
     dates = pd.date_range(
-        dt.datetime(2018, 7, 4),
+        dt.datetime(2019, 7, 15),
         dt.datetime(2019, 12, 31), 
         freq = '1M'
         )
