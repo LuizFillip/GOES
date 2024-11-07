@@ -91,25 +91,29 @@ def run_nucleos(dn, b = 'E'):
     return pd.concat(out)
 
 
-dates = pd.date_range(
-    dt.datetime(2013, 1, 1),
-    dt.datetime(2017, 12, 31), 
-    freq = '1M'
-    )
+
 
 def start_process(dates):
-    out = []
-    for dn in dates:
-       
-        out.append(run_nucleos(dn, b = 'D'))
-
-    df = pd.concat(out)
     
-    df.to_csv('test_goes2') 
+    for year in range(2013, 2019):
+        
+        dates = pd.date_range(
+            dt.datetime(year, 1, 1),
+            dt.datetime(year, 12, 31), 
+            freq = '1M'
+            )
+        out = []
+        for dn in dates:
+           
+            out.append(run_nucleos(dn, b = 'D'))
+    
+        df = pd.concat(out)
+        
+        df.to_csv(f'GOES/data/{year}') 
     
 # start_process(dates)
 
 # fname = 'GOES/data/S10635346_201801010000.nc'
 
-fname = 'S10635346_201904011030.nc'
+# fname = 'S10635346_201904011030.nc'
 

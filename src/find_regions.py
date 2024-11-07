@@ -17,7 +17,7 @@ def save_maps(ref_day):
         
         plt.ioff()
             
-        fig = gs.test_plot(infile + fname, temp = -30)
+        fig = gs.test_plot(infile + fname, temp = -40)
         
         FigureName = fname.split('_')[1][:-3]
         
@@ -38,6 +38,6 @@ def save_maps(ref_day):
 
 
 
-ref_day = dt.datetime(2019, 4, 1)
+# ref_day = dt.datetime(2019, 4, 1)
 
-save_maps(ref_day)
+# save_maps(ref_day)
