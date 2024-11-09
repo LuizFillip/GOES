@@ -91,29 +91,37 @@ def run_nucleos(dn, b = 'E'):
     return pd.concat(out)
 
 
+import base as b 
 
 
-def start_process(dates):
+def start_process():
     
-    for year in range(2013, 2019):
+    root = 'GOES/data/'
+    
+    for year in range(2018, 2020):
+        
+        path_year = f'{root}{year}'
+        
+        b.make_dir(path_year)
         
         dates = pd.date_range(
             dt.datetime(year, 1, 1),
             dt.datetime(year, 12, 31), 
             freq = '1M'
             )
-        out = []
-        for dn in dates:
-           
-            out.append(run_nucleos(dn, b = 'D'))
-    
-        df = pd.concat(out)
         
-        df.to_csv(f'GOES/data/{year}') 
+        for dn in dates:
+            df = run_nucleos(dn, b = 'D')
+                
+            df.to_csv(f'{path_year}{dn.month}') 
     
-# start_process(dates)
+# start_process()
 
 # fname = 'GOES/data/S10635346_201801010000.nc'
-
+# dn = dt.datetime(2018,1,1)
 # fname = 'S10635346_201904011030.nc'
+# fname = walk_goes(dn, b = 'D')[0]
 
+# fname 
+
+# nucleos_catalog(fname)

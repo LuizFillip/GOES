@@ -84,6 +84,8 @@ class plotTopCloud(object):
                orientation = orientation, 
                anchor = anchor
                )
+        return None
+
         
     def reference_line(self, lon = None, lat = None):
         
