@@ -96,14 +96,15 @@ class plotTopCloud(object):
             
         return None 
     
-    def add_map(self, ax):
+    def add_map(self, ax, year = 2013):
        
       
         lat_lims = dict(min = -40, max = 20, stp = 10)
         lon_lims = dict(min = -90, max = -30, stp = 10) 
 
         gg.map_attrs(
-            ax, 2013, 
+            ax, 
+            year, 
             lat_lims  = lat_lims, 
             lon_lims = lon_lims,
             grid = False,
@@ -187,8 +188,3 @@ def test_plot(fname, temp = -30):
             )
         
     return fig 
-
-# fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904011030.nc'
-
-
-# fig = test_plot(fname)

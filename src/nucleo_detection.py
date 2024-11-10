@@ -5,6 +5,7 @@ import GOES as gs
 import os 
 from tqdm import tqdm 
 import datetime as dt 
+import base as b 
 
 
 def find_nucleos(
@@ -85,43 +86,38 @@ def run_nucleos(dn, b = 'E'):
     io = dn.strftime('%Y-%m')
     out = []
     for file in tqdm(walk_goes(dn, b), io):
-        
-        out.append(nucleos_catalog(file))
+        try:
+            out.append(nucleos_catalog(file))
+        except:
+            continue
         
     return pd.concat(out)
 
 
-import base as b 
 
 
-def start_process():
+def start_process(year):
     
     root = 'GOES/data/'
+          
+    path_year = f'{root}{year}/'
     
-    for year in range(2018, 2020):
-        
-        path_year = f'{root}{year}'
-        
-        b.make_dir(path_year)
-        
-        dates = pd.date_range(
-            dt.datetime(year, 1, 1),
-            dt.datetime(year, 12, 31), 
-            freq = '1M'
-            )
-        
-        for dn in dates:
-            df = run_nucleos(dn, b = 'D')
-                
-            df.to_csv(f'{path_year}{dn.month}') 
+    b.make_dir(path_year)
     
-# start_process()
+    dates = pd.date_range(
+        dt.datetime(year, 1, 1),
+        dt.datetime(year, 12, 31), 
+        freq = '1M'
+        )
+    
+    for dn in dates:
+        df = run_nucleos(dn, b = 'D')
+            
+        df.to_csv(f'{path_year}{dn.month}') 
 
-# fname = 'GOES/data/S10635346_201801010000.nc'
-# dn = dt.datetime(2018,1,1)
-# fname = 'S10635346_201904011030.nc'
-# fname = walk_goes(dn, b = 'D')[0]
-
-# fname 
-
-# nucleos_catalog(fname)
+# start_process(2019)
+year = 2018
+dn = dt.datetime(year, 12, 1)
+df = run_nucleos(dn, b = 'D')
+    
+df.to_csv(f'GOES/data/{year}/{dn.month}') 
