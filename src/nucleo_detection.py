@@ -90,7 +90,6 @@ def run_nucleos(dn, b = 'E'):
             out.append(nucleos_catalog(file))
         except:
             continue
-        
     return pd.concat(out)
 
 
@@ -121,3 +120,5 @@ dn = dt.datetime(year, 12, 1)
 df = run_nucleos(dn, b = 'D')
     
 df.to_csv(f'GOES/data/{year}/{dn.month}') 
+
+# walk_goes(dn, b = 'D')
