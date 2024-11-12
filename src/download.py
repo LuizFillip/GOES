@@ -21,8 +21,7 @@ def goesURL(str_yr, str_mn):
         
     return f'{base}{str_yr}/{str_mn}/'
 
-
-def dowloadGOES(dn, files = None, B = 'E'):
+def dowloadGOES(dn,  B = 'E'):
     
     str_mn = dn.strftime("%m")
     str_yr = dn.strftime("%Y")
@@ -36,34 +35,31 @@ def dowloadGOES(dn, files = None, B = 'E'):
     
     info = f'{str_mn}-{str_yr}'
     out = []
+    
+    files = os.listdir(path_mn)
     for href in tqdm(wb.request(url), info):
         
         if href.endswith('gz') or href.endswith('nc'):
-            if files is not None:
-                if href not in files:
-                    out.append(href)
-                    
-                    wb.download(
-                        url, 
-                        href, 
-                        path_mn
-                        )
-                else:
-                    print(href, 'done')
-            else:
+            
+            if href not in files:
+                out.append(href)
+                
                 wb.download(
                     url, 
                     href, 
                     path_mn
                     )
-    print(len(out))      
+            else:
+                print(href, 'done')
+            
+   
     return None 
 
 def woon_dowload():
     s = time()
     
     dates = pd.date_range(
-        dt.datetime(2020, 10, 1),
+        dt.datetime(2020, 12, 1),
         dt.datetime(2022, 12, 31), 
         freq = '1M'
         )
@@ -76,15 +72,8 @@ def woon_dowload():
     print((e - s)/ 3600, 'hours')
     
     
-# woon_dowload()
+woon_dowload()
 
-dn = dt.datetime(2019, 4, 1)
-
-path = 'E:\\database\\goes\\'
-
-date = dn.strftime('%Y\\%m')
-
-files = os.listdir(f'{path}{date}')
+# dn = dt.datetime(2020, 11, 1)
 
 
-dowloadGOES(dn, files = files, B = 'D')
