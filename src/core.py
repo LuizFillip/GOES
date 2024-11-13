@@ -7,8 +7,6 @@ import os
 import xarray as xr
 
 
-
-        
 def read_gzbin(f_name):
  
     with gzip.open(f_name, 'rb') as f:

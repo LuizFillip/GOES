@@ -72,7 +72,7 @@ def woon_dowload():
     print((e - s)/ 3600, 'hours')
     
     
-woon_dowload()
+# woon_dowload()
 
 # dn = dt.datetime(2020, 11, 1)
 

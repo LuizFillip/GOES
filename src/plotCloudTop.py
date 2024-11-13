@@ -145,6 +145,68 @@ class plotTopCloud(object):
         return None 
 
 
+def plot_regions(
+        ax, 
+        x_stt, y_stt, 
+        x_end, y_end, 
+        number = None, 
+        color = 'k'
+        ):
+    
+  
+    rect = plt.Rectangle(
+        (x_stt, y_stt), 
+        x_end - x_stt, 
+        y_end - y_stt,
+        edgecolor = color, 
+        facecolor = 'none', 
+        linewidth = 3
+    )
+    
+    ax.add_patch(rect)
+    
+    if number is not None:
+        middle_y = (y_end + y_stt) / 2
+        middle_x = (x_end + x_stt) / 2
+        
+        ax.text(
+            middle_x, 
+            middle_y + 1, number, 
+            transform = ax.transData
+            )
+    return ax 
+
+def tracker_plot(ax, ds, color = 'k'):
+   
+    
+    lat_lims = dict(min = -40, max = 20, stp = 10)
+    lon_lims = dict(min = -90, max = -30, stp = 10) 
+    
+    gg.map_attrs(
+       ax, 2013, 
+       lat_lims = lat_lims, 
+       lon_lims = lon_lims,
+       grid = False,
+       degress = None
+        )
+    
+    for index, row in ds.iterrows():
+        
+        plot_regions(
+            ax,
+            row['x0'], 
+            row['y0'],
+            row['x1'], 
+            row['y1'], 
+            color = color
+            )
+        
+        mx = (row['x1'] + row['x0']) / 2
+        my = (row['y1'] + row['y0']) / 2
+        ax.scatter(mx, my, s = 100, color = 'red')
+    return ax 
+
+
 def test_plot(fname, temp = -30):
     
     fig, ax = plt.subplots(

@@ -115,10 +115,10 @@ def start_process(year):
         df.to_csv(f'{path_year}{dn.month}') 
 
 # start_process(2019)
-year = 2018
-dn = dt.datetime(year, 12, 1)
-df = run_nucleos(dn, b = 'D')
+# year = 2018
+# dn = dt.datetime(year, 12, 1)
+# df = run_nucleos(dn, b = 'D')
     
-df.to_csv(f'GOES/data/{year}/{dn.month}') 
+# df.to_csv(f'GOES/data/{year}/{dn.month}') 
 
-# walk_goes(dn, b = 'D')
+# # walk_goes(dn, b = 'D')

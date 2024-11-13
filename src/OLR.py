@@ -7,88 +7,11 @@ import matplotlib.pyplot as plt
 import datetime as dt 
 from tqdm import tqdm 
 
-infile = 'GOES/data/Select_ep_data_lat_lon_2013.txt'
+
 
 b.config_labels()
 
 
-def plot_regions(
-        ax, 
-        x_stt, y_stt, 
-        x_end, y_end, 
-        number = None, 
-        color = 'k'
-        ):
-    
-  
-    rect = plt.Rectangle(
-        (x_stt, y_stt), 
-        x_end - x_stt, 
-        y_end - y_stt,
-        edgecolor = color, 
-        facecolor = 'none', 
-        linewidth = 3
-    )
-    
-    ax.add_patch(rect)
-    
-    if number is not None:
-        middle_y = (y_end + y_stt) / 2
-        middle_x = (x_end + x_stt) / 2
-        
-        ax.text(
-            middle_x, 
-            middle_y + 1, number, 
-            transform = ax.transData
-            )
-    return ax 
-
-def tracker_plot(ax, ds, color = 'k'):
-   
-    
-    lat_lims = dict(min = -40, max = 20, stp = 10)
-    lon_lims = dict(min = -90, max = -30, stp = 10) 
-    
-    gg.map_attrs(
-       ax, 2013, 
-       lat_lims = lat_lims, 
-       lon_lims = lon_lims,
-       grid = False,
-       degress = None
-        )
-    
-    for index, row in ds.iterrows():
-        
-        plot_regions(
-            ax,
-            row['x0'], 
-            row['y0'],
-            row['x1'], 
-            row['y1'], 
-            color = color
-            )
-        
-        mx = (row['x1'] + row['x0']) / 2
-        my = (row['y1'] + row['y0']) / 2
-        ax.scatter(mx, my, s = 100, color = 'red')
-    return ax 
-
-
-def load_tunde(infile):
-    df = pd.read_csv(infile, delim_whitespace=True)
-    
-    df.index = pd.to_datetime(
-        df['Date'] + ' ' + 
-        df[['Hour', 'Minute', 'Second']
-           ].astype(str).agg(':'.join, axis=1))
-    
-    df = df.drop(
-        columns = [
-        'Year', 'DOY', 'Date', 
-        'Hour', 'Minute', 'Second']
-        )
-    
-    return df
 
 
     
@@ -151,12 +74,7 @@ def sequential_blocks(df):
     return blocos_sequenciais
     
 
-# fig, ax = plt.subplots(
-#      dpi = 300, 
-#      figsize = (10, 10),
-#      subplot_kw = 
-#      {'projection': ccrs.PlateCarree()}
-#      )
+
 
 def filter_region(df, sector, year = 2013):
     '''filter region'''
@@ -237,9 +155,9 @@ def run_years_convective():
     return pd.concat(out)
     
     
-df = run_years_convective()
+# df = run_years_convective()
 
-df.to_csv('nucleos2')
+# df.to_csv('nucleos2')
 
     
 # df = load_tunde(infile)
