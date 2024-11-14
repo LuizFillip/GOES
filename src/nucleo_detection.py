@@ -104,21 +104,15 @@ def start_process(year):
     b.make_dir(path_year)
     
     dates = pd.date_range(
-        dt.datetime(year, 1, 1),
+        dt.datetime(year, 9, 1),
         dt.datetime(year, 12, 31), 
         freq = '1M'
         )
     
     for dn in dates:
         df = run_nucleos(dn, b = 'D')
-            
+        
         df.to_csv(f'{path_year}{dn.month}') 
 
-# start_process(2019)
-# year = 2018
-# dn = dt.datetime(year, 12, 1)
-# df = run_nucleos(dn, b = 'D')
-    
-# df.to_csv(f'GOES/data/{year}/{dn.month}') 
+# start_process(2021)
 
-# # walk_goes(dn, b = 'D')
