@@ -11,7 +11,8 @@ b.config_labels(fontsize = 35 )
 def size_by_grid(
         df, 
         step = 2.5, 
-        rounding = 0):
+        rounding = 0
+        ):
   
     lon_bins = np.arange(
         df['lon'].min(), 
@@ -43,20 +44,20 @@ def size_by_grid(
     
     return event_count
 
-def plot_map_contour(ax, df):
+def plot_map_contour(ax, df, year = 2019):
 
-    
     lat_lims = dict(min = -40, max = 20, stp = 10)
     lon_lims = dict(min = -90, max = -30, stp = 10) 
     
     gg.map_attrs(
-       ax, 2013, 
+       ax, year, 
        lat_lims = lat_lims, 
        lon_lims = lon_lims,
        grid = False,
        degress = None
         )
-    gg.plot_rectangles_regions(ax, 2013, color = 'white')
+    
+    gg.plot_rectangles_regions(ax, year, color = 'white')
     
     ax.contourf(
         df.columns, 
@@ -66,11 +67,12 @@ def plot_map_contour(ax, df):
         cmap = 'jet'
         )
     
-    return fig
+    return ax
 
 
 
 def set_data(df, step = 2):
+    
     df['lon'] = (df['x1'] + df['x0']) / 2
     df['lat'] = (df['y1'] + df['y0']) / 2
     
@@ -91,67 +93,74 @@ def set_data(df, step = 2):
 
 
 
-year = 2013
-infile = f'GOES/data/{year}'
 
 
-df = b.load(infile)
-
-months = [
-    [12, 1, 2],
-    [3, 4, 5], 
-    [6, 7, 8],
-    [9, 10, 11]
-    ]
-
-names = [
-    'dez - fev', 
-    'mar - mai', 
-    'jun - agu',
-    'set - nov'
-    ]
-
-fig, ax = plt.subplots(
-      dpi = 300, 
-      ncols = 2, 
-      nrows = 2, 
-      figsize = (16, 16),
-      subplot_kw = 
-      {'projection': ccrs.PlateCarree()}
-      )
+def plot_seasonal_convective_rate(df):
     
-plt.subplots_adjust(wspace = 0., hspace = 0.15)
+    year = df.index[0].year
 
-
-for i, ax in enumerate(ax.flat):
+    months = [
+        [12, 1, 2],
+        [3, 4, 5], 
+        [6, 7, 8],
+        [9, 10, 11]
+        ]
     
-    season = months[i]
-    ds = set_data(df.loc[df.index.month.isin(season)])
+    names = [
+        'dez - fev', 
+        'mar - mai', 
+        'jun - agu',
+        'set - nov'
+        ]
+    
+    fig, ax = plt.subplots(
+          dpi = 300, 
+          ncols = 2, 
+          nrows = 2, 
+          figsize = (16, 16),
+          subplot_kw = 
+          {'projection': ccrs.PlateCarree()}
+          )
         
-    plot_map_contour(ax, ds) 
+    plt.subplots_adjust(wspace = 0., hspace = 0.15)
     
-    if i != 2:
+    
+    for i, ax in enumerate(ax.flat):
         
-        ax.set(
-            xticklabels = [],
-            xlabel = '',
-            ylabel = '',
-            yticklabels = []
+        season = months[i]
+        ds = set_data(df.loc[df.index.month.isin(season)])
+            
+        plot_map_contour(ax, ds) 
+        
+        if i != 2:
+            
+            ax.set(
+                xticklabels = [],
+                xlabel = '',
+                ylabel = '',
+                yticklabels = []
+                )
+    
+        
+        ax.set_title(names[i].upper(), fontsize = 30)
+        
+        
+    b.fig_colorbar(
+            fig,
+            label = 'Occurrence rate of convective nucleos (\%)',
+            fontsize = 35,
+            vmin = 0, 
+            vmax = 100, 
+            step = 10,
+            orientation = 'horizontal',
+            sets = [0.14, 1., 0.75, 0.02] 
             )
+    
+    fig.suptitle(year, y = 1.1)
+    
+    return fig
 
-    
-    ax.set(title = names[i].upper())
-    
-    
-b.fig_colorbar(
-        fig,
-        label = 'Occurrence rate of convective Nucleos (\%)',
-        fontsize = 35,
-        vmin = 0, 
-        vmax = 100, 
-        step = 10,
-        orientation = 'horizontal',
-        sets = [0.14, 1., 0.75, 0.02] 
-        )
 
-fig.suptitle(year, y = 1.1)
+# for year in range(2014, 2018):
+#     infile = f'GOES/data/nucleos/{year}'
+#     fig = plot_seasonal_convective_rate( b.load(infile))

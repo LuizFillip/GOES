@@ -23,12 +23,14 @@ def save_maps(ref_day, B = 'D'):
         dn  = gs.fname2date(fname)
         
         if dn < ref_day:
-            
-            fig = gs.test_plot(infile + fname, temp = -60)
-            
-            FigureName = fname.split('_')[1][:-3]
-            
-            fig.savefig(path + FigureName, dpi = 100)
+            try:
+                fig = gs.test_plot(infile + fname, temp = -60)
+                
+                FigureName = fname.split('_')[1][:-3]
+                
+                fig.savefig(path + FigureName, dpi = 100)
+            except:
+                 continue
             
             plt.clf()   
             plt.close()

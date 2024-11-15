@@ -156,19 +156,7 @@ def plot_map(ax, ds):
         cmap = 'jet'
         )
     
-    # ticks= np.arange(3, 18, 2)
-    
-    # b.colorbar(
-    #     img,  
-    #     ax,   
-    #     ticks, 
-    #     label = 'Ep (J/Kg)', 
-    #     height = "100%", 
-    #     width = "10%",
-    #     orientation = "vertical", 
-    #     anchor = (.25, 0., 1, 1)
-    #     )
-    
+    return img 
     
 
 def set_data(ds, step = 1):
@@ -184,78 +172,78 @@ def set_data(ds, step = 1):
         index = 'lat_bin', 
         values = 'mean_90_110'
         )
-    
-    # ds = ds.replace(np.nan, 0)
-    
+        
     return ds 
 
-months = [
-    [12, 1, 2],
-    [3, 4, 5], 
-    [6, 7, 8],
-    [9, 10, 11]
-    ]
-
-names = [
-    'dez - fev', 
-    'mar - mai', 
-    'jun - agu',
-    'set - nov'
-    ]
-fig, ax = plt.subplots(
-      dpi = 300, 
-      ncols = 2, 
-      nrows = 2, 
-      figsize = (16, 16),
-      subplot_kw = 
-      {'projection': ccrs.PlateCarree()}
-      )
-
-plt.subplots_adjust(wspace = 0., hspace = 0.15)
-
-year = 2013
-infile = 'GOES/data/Select_ep_data_lat_lon_2013.txt'
-
-ds = load_tunde(infile)
 
 
-ds = ds.rename(columns = {'Lat': 'lat', 'Lon': 'lon'})
-
-b.config_labels()
-
-step = 2
-
-
-for i, ax in enumerate(ax.flat):
+def plot_seasonal_occurrence(year = 2013, step = 4):
     
-    season = months[i]
+    b.config_labels()
     
-    df = ds.loc[ds.index.month.isin(season)]
-          
-    plot_map(ax, set_data(df, step = step)) 
+    fig, axs = plt.subplots(
+          dpi = 300, 
+          ncols = 2, 
+          nrows = 2, 
+          figsize = (16, 16),
+          subplot_kw = 
+          {'projection': ccrs.PlateCarree()}
+          )
     
-    if i != 2:
+    plt.subplots_adjust(wspace = 0., hspace = 0.15)
+    
+    infile = 'GOES/data/Select_ep_data_lat_lon_2013.txt'
+    
+    ds = load_tunde(infile)
+    
+    ds = ds.rename(columns = {'Lat': 'lat', 'Lon': 'lon'})
+    
+    b.config_labels()
+    
+    seasons = {
+        'dec - feb': [12, 1, 2], 
+        'mar - mai': [3, 4, 5], 
+        'jun - agu': [6, 7, 8],
+        'sep - nov': [9, 10, 11]
+        }
+
+
+    for i, (key, value) in enumerate(seasons.items()):
+        ax = axs.flat[i]
+                
+        df = ds.loc[ds.index.month.isin(value)]
+              
+        plot_map(ax, set_data(df, step = step)) 
         
-        ax.set(
-            xticklabels = [],
-            xlabel = '',
-            ylabel = '',
-            yticklabels = []
+        if i != 2:
+            
+            ax.set(
+                xticklabels = [],
+                xlabel = '',
+                ylabel = '',
+                yticklabels = []
+                )
+    
+        
+        ax.set(title = key.upper())
+        
+        
+    b.fig_colorbar(
+            fig,
+            label = 'Ep (J/Kg)',
+            fontsize = 35,
+            vmin = 3, 
+            vmax = 18, 
+            step = 2,
+            orientation = 'horizontal',
+            sets = [0.13, 1., 0.75, 0.02] 
             )
+    
+    fig.suptitle(year, y = 1.1)
+    
+    return fig
+    
+    
+fig = plot_seasonal_occurrence()
 
-    
-    ax.set(title = names[i].upper())
-    
-    
-b.fig_colorbar(
-        fig,
-        label = 'Ep (J/Kg)',
-        fontsize = 35,
-        vmin = 3, 
-        vmax = 18, 
-        step = 2,
-        orientation = 'horizontal',
-        sets = [0.13, 1., 0.75, 0.02] 
-        )
 
-fig.suptitle(year)
