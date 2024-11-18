@@ -5,30 +5,15 @@ import matplotlib.pyplot as plt
 import base as b 
 from scipy.ndimage import gaussian_filter
 import numpy as np 
-
-def load_tunde(infile):
-    df = pd.read_csv(infile, delim_whitespace=True)
-    
-    df.index = pd.to_datetime(
-        df['Date'] + ' ' + 
-        df[['Hour', 'Minute', 'Second']
-           ].astype(str).agg(':'.join, axis=1))
-    
-    df = df.drop(
-        columns = [
-        'Year', 'DOY', 'Date', 
-        'Hour', 'Minute', 'Second']
-        )
-    
-    return df
+import core as c
 
 
 
     
 
 
-def load_nucleos():
-    infile = 'GOES/data/2013'
+def load_nucleos(year = 2019, sample = '15D'):
+    infile = f'GOES/data/nucleos/{year}'
     
     df = b.load(infile)
     
@@ -36,13 +21,14 @@ def load_nucleos():
     df['lat'] = (df['y1'] + df['y0']) / 2
     
     #
-    cond = [   (df['lat'] > -20) & 
+    cond = [  
+        (df['lat'] > -20) & 
         (df['lat'] < 10) ]
     df = df.resample(sample).size()
     
     
     df = (df / df.values.max()) *100
-
+    return df 
 
 def plot_seasonal(df, ds):
 
@@ -85,12 +71,13 @@ def plot_seasonal(df, ds):
     b.format_month_axes(ax)
 
 
-# plot_seasonal(df, ds)
 
 
 def size_by_grid(
-        df, step = 1, 
-        rounding = 0):
+        df, 
+        step = 1, 
+        rounding = 0
+        ):
  
     lon_bins = np.arange(
         df['lon'].min(), 
@@ -103,13 +90,13 @@ def size_by_grid(
     
     df['lon_bin'] = pd.cut(
         df['lon'], 
-        bins=lon_bins, 
-        labels=lon_bins[:-1]
+        bins = lon_bins, 
+        labels = lon_bins[:-1]
         )
     df['lat_bin'] = pd.cut(
         df['lat'], 
-        bins=lat_bins, 
-        labels=lat_bins[:-1]
+        bins = lat_bins, 
+        labels = lat_bins[:-1]
         )
     
     df['lon_bin'] = df['lon_bin'].astype(
@@ -127,32 +114,27 @@ def size_by_grid(
 
 
 
-def plot_map(ax, ds):
-    # fig, ax = plt.subplots(
-    #       dpi = 300, 
-    #       figsize = (10,10),
-    #       subplot_kw = 
-    #       {'projection': ccrs.PlateCarree()}
-    #       )
-        
-    
+def plot_map(ax, ds, year = 2013):
+
     lat_lims = dict(min = -40, max = 20, stp = 10)
     lon_lims = dict(min = -90, max = -30, stp = 10) 
     
     gg.map_attrs(
-       ax, 2013, 
+       ax, 
+       year, 
        lat_lims = lat_lims, 
        lon_lims = lon_lims,
        grid = False,
        degress = None
         )
-
+    
+    # gg.plot_rectangles_regions(ax, year, color = 'k')
 
     img = ax.contourf(
         ds.columns, 
         ds.index, 
         ds.values, 
-        levels = np.arange(3, 18, 1),
+        levels = np.arange(3, 20, 1),
         cmap = 'jet'
         )
     
@@ -172,78 +154,127 @@ def set_data(ds, step = 1):
         index = 'lat_bin', 
         values = 'mean_90_110'
         )
-        
+    # print(np.nanmax(ds.values))
     return ds 
 
+def plot_seasonal_Ep():
 
+    fig, ax = plt.subplots( 
+        sharex = True,
+        sharey = True,
+        figsize = (14, 8), 
+        dpi = 300
+        )
+        
+    years = [2013, 2019]
+    maks = ['s', 'o']
+    labl = ['Maximum', 'Minimum']
+    
+    for i, year in enumerate(years):
+        
+        df = c.potential_energy(year)
+        
+        ds = df['mean_90_110'].resample('1M').mean()
+        
+        ds.index = ds.index.month
+        
+        ax.plot(ds, lw = 2, 
+                label = f'Solar {labl[i]} - {year}',
+                markersize = 20, 
+                marker = maks[i], 
+             
+                )
+    
+    ax.legend(loc = 'upper right')
+    ax.set(
+           ylabel = 'Ep (J/Kg)', 
+           xticks = np.arange(1, 13, 1),
+           xlabel = 'Months')
+    
+    plt.show()
+    return fig
 
-def plot_seasonal_occurrence(year = 2013, step = 4):
+def plot_seasonal_occurrence(
+        ax, 
+        row = 1, 
+        year = 2013,
+        step = 2
+        ):
     
-    b.config_labels()
+    ds = c.potential_energy(year)
     
-    fig, axs = plt.subplots(
-          dpi = 300, 
-          ncols = 2, 
-          nrows = 2, 
-          figsize = (16, 16),
-          subplot_kw = 
-          {'projection': ccrs.PlateCarree()}
-          )
-    
-    plt.subplots_adjust(wspace = 0., hspace = 0.15)
-    
-    infile = 'GOES/data/Select_ep_data_lat_lon_2013.txt'
-    
-    ds = load_tunde(infile)
-    
-    ds = ds.rename(columns = {'Lat': 'lat', 'Lon': 'lon'})
-    
-    b.config_labels()
+    ds = ds.rename(columns = {'Lat': 'lat', 
+                              'Lon': 'lon'})
+
     
     seasons = {
-        'dec - feb': [12, 1, 2], 
-        'mar - mai': [3, 4, 5], 
-        'jun - agu': [6, 7, 8],
-        'sep - nov': [9, 10, 11]
+        'Nov - Jan': [11, 12, 1], 
+        'Feb - Apr': [2, 3, 4], 
+        'Jun - Sep': [5, 6, 7],
+        'Agu - Oct': [8, 9, 10]
         }
 
 
     for i, (key, value) in enumerate(seasons.items()):
-        ax = axs.flat[i]
-                
+       
         df = ds.loc[ds.index.month.isin(value)]
-              
-        plot_map(ax, set_data(df, step = step)) 
         
-        if i != 2:
+              
+        plot_map(ax[row, i], set_data(df, step = step)) 
+        
+        # if row == 0:
             
-            ax.set(
+        l = b.chars()[i]
+        
+        ax[row, i].set_title(
+            f'({l}) {key} ({year})', 
+            fontsize = 20
+            )
+            
+        
+        if i == 0 and row == 1:
+            pass
+        else:
+            ax[row, i].set(
                 xticklabels = [],
                 xlabel = '',
                 ylabel = '',
                 yticklabels = []
                 )
-    
+            
+    return ax 
         
-        ax.set(title = key.upper())
         
         
-    b.fig_colorbar(
-            fig,
-            label = 'Ep (J/Kg)',
-            fontsize = 35,
-            vmin = 3, 
-            vmax = 18, 
-            step = 2,
-            orientation = 'horizontal',
-            sets = [0.13, 1., 0.75, 0.02] 
-            )
+        
+        
+b.config_labels(fontsize = 25)
     
-    fig.suptitle(year, y = 1.1)
-    
-    return fig
-    
-    
-fig = plot_seasonal_occurrence()
 
+fig, axs = plt.subplots(
+      dpi = 300, 
+      ncols = 4, 
+      nrows = 2, 
+      figsize = (15, 8),
+      subplot_kw = 
+      {'projection': ccrs.PlateCarree()}
+      )
 
+plt.subplots_adjust(wspace = 0.1, hspace = 0.1)
+    
+plot_seasonal_occurrence(axs, row = 0, year = 2013, step = 3)
+plot_seasonal_occurrence(axs, row = 1, year = 2019, step = 3)
+
+b.fig_colorbar(
+        fig,
+        label = 'Ep (J/Kg)',
+        fontsize = 35,
+        vmin = 3, 
+        vmax = 18, 
+        step = 2,
+        orientation = "vertical", 
+        anchor = (.94, 0.13, 0.03, 0.73)
+        )
+
+# fig.suptitle(year, y = 1.1)
+ 

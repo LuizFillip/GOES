@@ -100,8 +100,6 @@ class CloudyTemperature(object):
         return np.column_stack((x, y, grid_means))
 
 
-
-
 def load_files(ref_day):
     path = 'E:\\database\\goes\\'
 

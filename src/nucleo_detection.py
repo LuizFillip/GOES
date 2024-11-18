@@ -104,7 +104,7 @@ def start_process(year):
     b.make_dir(path_year)
     
     dates = pd.date_range(
-        dt.datetime(year, 8, 1),
+        dt.datetime(year, 10, 1),
         dt.datetime(year, 12, 31), 
         freq = '1M'
         )
@@ -114,5 +114,5 @@ def start_process(year):
         
         df.to_csv(f'{path_year}{dn.month}') 
 
-start_process(2021)
+start_process(2022)
 

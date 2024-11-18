@@ -2,8 +2,6 @@ import pandas as pd
 import base as b 
 import numpy as np
 import GEO as gg 
-import cartopy.crs as ccrs
-import matplotlib.pyplot as plt 
 import datetime as dt 
 from tqdm import tqdm 
 

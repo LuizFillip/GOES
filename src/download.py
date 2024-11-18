@@ -59,7 +59,7 @@ def woon_dowload():
     s = time()
     
     dates = pd.date_range(
-        dt.datetime(2021, 9, 1),
+        dt.datetime(2022, 10, 1),
         dt.datetime(2022, 12, 31), 
         freq = '1M'
         )
@@ -74,6 +74,6 @@ def woon_dowload():
     
 woon_dowload()
 
-# dn = dt.datetime(2020, 11, 1)
-
+# dn = dt.datetime(2022, 9, 1)
+# dowloadGOES(dn, B = 'D')
 

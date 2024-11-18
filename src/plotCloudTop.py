@@ -219,14 +219,13 @@ def test_plot(fname, temp = -30):
     ds = gs.CloudyTemperature(fname)
     
     dat, lon, lat = ds.data, ds.lon, ds.lat
-    dn =  ds.dn
-    
+  
     ptc = plotTopCloud(dat, lon, lat, fig)
     img = ptc.contour(ax)
     ptc.add_map(ax)
     ptc.colorbar(img, ax)
         
-    ax.set(title = dn)
+    ax.set(title = ds.dn)
     
     nl =  gs.find_nucleos(
               dat, 
