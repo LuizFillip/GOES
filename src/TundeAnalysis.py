@@ -243,7 +243,7 @@ def plot_seasonal_occurrence(
                 )
             
     return ax 
-        
+        ''
         
         
         
