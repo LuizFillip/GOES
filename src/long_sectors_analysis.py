@@ -149,19 +149,3 @@ def split_in_sector():
     ds.index = np.round(ds.index, 2)
 
 
-# ds = df.groupby(
-#     ['month', 'sector']
-#     ).size().reset_index(name='occs')
-
-# ds = pd.pivot_table(
-#     ds, 
-#     columns = 'sector', 
-#     index = 'month', 
-#     values = 'occs'
-#     )
-
-# plt.plot(ds)
-
-# ds.plot(lw = 3, subplots = True)
-
-# plot_scatter_correlation()
