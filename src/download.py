@@ -13,7 +13,9 @@ def goesURL(str_yr, str_mn):
     
     base = "http://ftp.cptec.inpe.br/goes/"
     
-    if year < 2018:
+    if (year >= 2003) and (year < 2013):
+        base += 'goes12/retangular_4km/ch4_bin/'
+    if(year >= 2013) and (year < 2018):
         base += 'goes13/retangular_4km/ch4_bin/'
     else:
         base += 'goes16/retangular/ch13/'
