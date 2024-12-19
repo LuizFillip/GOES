@@ -12,14 +12,13 @@ def goesURL(str_yr, str_mn):
     year = int(str_yr)
     
     base = "http://ftp.cptec.inpe.br/goes/"
-    
+    # https://ftp.cptec.inpe.br/goes/goes12/retangular_4km/ch4_bin/2004/
     if (year >= 2003) and (year < 2013):
         base += 'goes12/retangular_4km/ch4_bin/'
-    if(year >= 2013) and (year < 2018):
+    if (year >= 2013) and (year < 2018):
         base += 'goes13/retangular_4km/ch4_bin/'
-    else:
+    if (year > 2018):
         base += 'goes16/retangular/ch13/'
-        
         
     return f'{base}{str_yr}/{str_mn}/'
 
@@ -39,13 +38,15 @@ def dowloadGOES(dn,  B = 'E'):
     out = []
     
     files = os.listdir(path_mn)
+  
+    
     for href in tqdm(wb.request(url), info):
-        
+   
         if href.endswith('gz') or href.endswith('nc'):
             
             if href not in files:
                 out.append(href)
-                
+            
                 wb.download(
                     url, 
                     href, 
@@ -61,21 +62,17 @@ def woon_dowload():
     s = time()
     
     dates = pd.date_range(
-        dt.datetime(2022, 10, 1),
-        dt.datetime(2022, 12, 31), 
+        dt.datetime(2004, 1, 1),
+        dt.datetime(2004, 12, 4), 
         freq = '1M'
         )
     
     for dn in dates:
-        dowloadGOES(dn, B = 'D')
+        dowloadGOES(dn, B = 'E')
     
     e = time()
     
     print((e - s)/ 3600, 'hours')
     
     
-woon_dowload()
-
-# dn = dt.datetime(2022, 9, 1)
-# dowloadGOES(dn, B = 'D')
-
+# woon_dowload()

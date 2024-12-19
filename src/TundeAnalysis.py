@@ -12,63 +12,6 @@ import core as c
     
 
 
-def load_nucleos(year = 2019, sample = '15D'):
-    infile = f'GOES/data/nucleos/{year}'
-    
-    df = b.load(infile)
-    
-    df['lon'] = (df['x1'] + df['x0']) / 2
-    df['lat'] = (df['y1'] + df['y0']) / 2
-    
-    #
-    cond = [  
-        (df['lat'] > -20) & 
-        (df['lat'] < 10) ]
-    df = df.resample(sample).size()
-    
-    
-    df = (df / df.values.max()) *100
-    return df 
-
-def plot_seasonal(df, ds):
-
-    fig, ax = plt.subplots(
-          dpi = 300, 
-          figsize = (16, 8)
-          )
-        
-    sdf = gaussian_filter(df, sigma=1)
-
-    ax.plot(
-        df.index,
-        sdf, 
-            lw = 3, color = 'blue')
-    ax.set(ylabel = 'Convective activity (\%)')
-    
-    b.change_axes_color(
-            ax, 
-            color = 'blue',
-            axis = "y", 
-            position = "left"
-            )
-    
-    ax1 = ax.twinx()
-    # ax1.scatter(ds.index, ds.values, c = 'red')
-    
-    # ds = ds.rolling(10).mean()
-    sds = gaussian_filter(ds, sigma=1)
-    ax1.plot(ds.index, sds,  lw = 3, color = 'red')
-    
-    ax1.set(ylabel = 'GW potential energy (J/Kg)')
-    b.change_axes_color(
-            ax1, 
-            color = 'red',
-            axis = "y", 
-            position = "right"
-            )
-    
-    
-    b.format_month_axes(ax)
 
 
 
@@ -221,9 +164,7 @@ def plot_seasonal_occurrence(
         
               
         plot_map(ax[row, i], set_data(df, step = step)) 
-        
-        # if row == 0:
-            
+                    
         l = b.chars()[i]
         
         ax[row, i].set_title(
@@ -243,38 +184,37 @@ def plot_seasonal_occurrence(
                 )
             
     return ax 
-        ''
+
         
         
         
         
-b.config_labels(fontsize = 25)
+# b.config_labels(fontsize = 25)
     
 
-fig, axs = plt.subplots(
-      dpi = 300, 
-      ncols = 4, 
-      nrows = 2, 
-      figsize = (15, 8),
-      subplot_kw = 
-      {'projection': ccrs.PlateCarree()}
-      )
+# fig, axs = plt.subplots(
+#       dpi = 300, 
+#       ncols = 4, 
+#       nrows = 2, 
+#       figsize = (15, 8),
+#       subplot_kw = 
+#       {'projection': ccrs.PlateCarree()}
+#       )
 
-plt.subplots_adjust(wspace = 0.1, hspace = 0.1)
+# plt.subplots_adjust(wspace = 0.1, hspace = 0.1)
     
-plot_seasonal_occurrence(axs, row = 0, year = 2013, step = 3)
-plot_seasonal_occurrence(axs, row = 1, year = 2019, step = 3)
+# plot_seasonal_occurrence(axs, row = 0, year = 2013, step = 3)
+# plot_seasonal_occurrence(axs, row = 1, year = 2019, step = 3)
 
-b.fig_colorbar(
-        fig,
-        label = 'Ep (J/Kg)',
-        fontsize = 35,
-        vmin = 3, 
-        vmax = 18, 
-        step = 2,
-        orientation = "vertical", 
-        anchor = (.94, 0.13, 0.03, 0.73)
-        )
+# b.fig_colorbar(
+#         fig,
+#         label = 'Ep (J/Kg)',
+#         fontsize = 35,
+#         vmin = 3, 
+#         vmax = 18, 
+#         step = 2,
+#         orientation = "vertical", 
+#         anchor = (.94, 0.13, 0.03, 0.73)
+#         )
 
-# fig.suptitle(year, y = 1.1)
- 
+# # fig.suptitle(year, y = 1.1)

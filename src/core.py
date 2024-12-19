@@ -5,7 +5,7 @@ import datetime as dt
 from tqdm import tqdm 
 import os 
 import xarray as xr
-
+import GOES as gs 
 
 def read_gzbin(f_name):
  
@@ -16,8 +16,9 @@ def read_gzbin(f_name):
             dtype = np.int16
             )
 
-        image_size = [1714, 1870]
+        # image_size = [1714, 1870]
         # image_size = [1200, 1335]
+        image_size = [1800, 1800]
         data_bin = dados_binarios.reshape(image_size)
     
         return data_bin / 100 - 273.13
@@ -133,6 +134,7 @@ def CloudTopKeogram(files, lon = -55):
         columns = 'time', 
         index = 'lat'
         )
+
 
 
 

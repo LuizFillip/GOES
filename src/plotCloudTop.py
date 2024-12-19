@@ -227,25 +227,28 @@ def test_plot(fname, temp = -30):
         
     ax.set(title = ds.dn)
     
-    nl =  gs.find_nucleos(
-              dat, 
-              lon, 
-              lat[::-1],
-              ds.dn,
-              temp_threshold = temp,
+    # nl =  gs.find_nucleos(
+    #           dat, 
+    #           lon, 
+    #           lat[::-1],
+    #           ds.dn,
+    #           temp_threshold = temp,
              
-              )
-    count = 0
-    for index, row in nl.iterrows():
-        count += 1
-        ptc.plot_regions(
-            ax,
-            row['x0'], 
-            row['y0'],
-            row['x1'], 
-            row['y1'], 
-            # number = count
-            # i = indexs
-            )
+    #           )
+    # count = 0
+    # for index, row in nl.iterrows():
+    #     count += 1
+    #     ptc.plot_regions(
+    #         ax,
+    #         row['x0'], 
+    #         row['y0'],
+    #         row['x1'], 
+    #         row['y1'], 
+    #         # number = count
+    #         # i = indexs
+    #         )
         
     return fig 
+fname = 'E:\\database\\goes\\2004\\01\\S10216956_200401010430.gz'
+
+fig = test_plot(fname, temp = -30)

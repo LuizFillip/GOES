@@ -114,5 +114,5 @@ def start_process(year):
         
         df.to_csv(f'{path_year}{dn.month}') 
 
-start_process(2022)
+# start_process(2022)
 
