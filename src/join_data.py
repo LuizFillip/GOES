@@ -19,3 +19,5 @@ def join_data():
         df = pd.concat(out)
         
         df.to_csv(f'GOES/data/nucleos/{year}')
+        
+    return None 
