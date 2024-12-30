@@ -207,6 +207,40 @@ def tracker_plot(ax, ds, color = 'k'):
     return ax 
 
 
+def tracker_nucleos(
+        ax, 
+        ds, 
+        color = 'k',
+        temp = -30
+        ):
+    
+    dat, lon, lat = ds.data, ds.lon, ds.lat
+    
+    nl =  gs.find_nucleos(
+              dat, 
+              lon, 
+              lat[::-1],
+              ds.dn,
+              temp_threshold = temp,
+             
+              )
+    count = 0
+    for index, row in nl.iterrows():
+        
+        plot_regions(
+            ax,
+            row['x0'], 
+            row['y0'],
+            row['x1'], 
+            row['y1'], 
+            color = color
+            )
+        
+        mx = (row['x1'] + row['x0']) / 2
+        my = (row['y1'] + row['y0']) / 2
+        ax.scatter(mx, my, s = 100, color = 'red')
+
+
 def test_plot(fname, temp = -30):
     
     fig, ax = plt.subplots(
@@ -227,28 +261,29 @@ def test_plot(fname, temp = -30):
         
     ax.set(title = ds.dn)
     
-    # nl =  gs.find_nucleos(
-    #           dat, 
-    #           lon, 
-    #           lat[::-1],
-    #           ds.dn,
-    #           temp_threshold = temp,
+    nl =  gs.find_nucleos(
+              dat, 
+              lon, 
+              lat[::-1],
+              ds.dn,
+              temp_threshold = temp,
              
-    #           )
-    # count = 0
-    # for index, row in nl.iterrows():
-    #     count += 1
-    #     ptc.plot_regions(
-    #         ax,
-    #         row['x0'], 
-    #         row['y0'],
-    #         row['x1'], 
-    #         row['y1'], 
-    #         # number = count
-    #         # i = indexs
-    #         )
+              )
+    count = 0
+    for index, row in nl.iterrows():
+        count += 1
+        ptc.plot_regions(
+            ax,
+            row['x0'], 
+            row['y0'],
+            row['x1'], 
+            row['y1'], 
+            # number = count
+            # i = indexs
+            )
         
     return fig 
-fname = 'E:\\database\\goes\\2004\\01\\S10216956_200401010430.gz'
 
-fig = test_plot(fname, temp = -30)
+# fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904010030.nc'
+
+# fig = test_plot(fname, temp = -30)
