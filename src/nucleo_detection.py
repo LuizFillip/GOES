@@ -30,6 +30,9 @@ def find_nucleos(
         x_stt, x_end = region[1].start, region[1].stop
         y_stt, y_end = region[0].start, region[0].stop
         
+        dat  = data[x_stt: x_end, y_stt: y_end]
+        avg_temp = np.nanmean(dat)
+        
         if by_indexes:
             if (x_end == xmax):
                 x_end = -1
@@ -40,11 +43,15 @@ def find_nucleos(
             y_stt, y_end = lats[y_stt], lats[y_end] 
         
         area = abs((y_end - y_stt) * (x_end - x_stt))
+        area *= 111.11**2
+        
         
         if area > area_threshold:
-            out.append([x_stt, x_end, y_stt, y_end, area])
+            out.append([x_stt, x_end, 
+                        y_stt, y_end, 
+                        area, avg_temp])
             
-    columns = ['x0', 'x1', 'y0', 'y1', 'area']
+    columns = ['x0', 'x1', 'y0', 'y1', 'area', 'temp']
     
     ds = pd.DataFrame(out, columns = columns)
     
@@ -68,16 +75,14 @@ def nucleos_catalog(fname):
             )
 
     return ds 
-def goes_path(dn, b = 'E'):
-    
-    mn = dn.strftime("%m")
-    yr = dn.strftime("%Y")
-    return f'{b}:\\database\\goes\\{yr}\\{mn}\\'
-    
+  
 
 def walk_goes(dn, b = 'E'):
     
-    path = goes_path(dn, b)
+    mn = dn.strftime("%m")
+    yr = dn.strftime("%Y")
+    
+    path =  f'{b}:\\database\\goes\\{yr}\\{mn}\\'
     
     return [os.path.join(path, f) for f in os.listdir(path)]
 
@@ -113,6 +118,25 @@ def start_process(year):
         df = run_nucleos(dn, b = 'D')
         
         df.to_csv(f'{path_year}{dn.month}') 
+    
+    return None 
+
 
 # start_process(2022)
 
+fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904010030.nc'
+dn = gs.fname2date(fname)
+ds = gs.CloudyTemperature(fname)
+dat, lon, lat = ds.data, ds.lon, ds.lat
+
+df = find_nucleos(
+        dat, 
+        lon, 
+        lat,
+        dn,
+        area_threshold = 10,
+        temp_threshold = -30,
+        by_indexes = True
+        )
+
+df.dropna()
