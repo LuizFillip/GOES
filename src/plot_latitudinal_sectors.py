@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import GEO as gg 
 import matplotlib.patches as mpatches
+import datetime as dt 
 
 def plot_contours(ax, fig):
     fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904010030.nc'
@@ -23,8 +24,10 @@ def plot_contours(ax, fig):
             ax, 
             ds, 
             color = 'k',
-            temp = -60
+            temp = -30
             )
+    
+    ax.set(title = ds.dn)
     
 def limits(
         df, 
@@ -36,8 +39,41 @@ def limits(
         ((df['Lat'] > y0) & (df['Lat'] < y1))
         ]
 
+def plot_sectors( 
+        ax, 
+        lat_min = -50, 
+        lat_max = 20,
+        lon_min = -80, 
+        lon_max = -30, 
+        height = 20
+        ):
 
-def plot_top_cloud_map(ds):
+    latitudes = range(lat_min, lat_max + 1, height)
+    
+    
+    for i, lat in enumerate(latitudes):
+        rect = mpatches.Rectangle(
+            xy=(lon_min, lat),  
+            width = lon_max - lon_min, 
+            height = height,  
+            edgecolor = 'blue',
+            facecolor = 'none',
+            linewidth = 4
+        )
+        ax.add_patch(rect)
+        
+        middle = (lat + 5) - 1
+        
+        ax.text(-35, middle, i + 1, 
+                transform = ax.transData, 
+                fontsize = 40, 
+                color = 'blue'
+                )
+    return None 
+     
+def plot_top_cloud_map(
+    
+        ):
     
     fig, ax = plt.subplots(
         dpi = 300, 
@@ -46,7 +82,7 @@ def plot_top_cloud_map(ds):
         {'projection': ccrs.PlateCarree()}
         )
     lat_lims = dict(min = -60, max = 30, stp = 10)
-    lon_lims = dict(min = -90, max = -30, stp = 10) 
+    lon_lims = dict(min = -90, max = -20, stp = 10) 
     
     gg.map_attrs(
        ax, 2013, 
@@ -56,19 +92,31 @@ def plot_top_cloud_map(ds):
        degress = None
         )
     
+    plot_contours(ax, fig)
     
-        
+ 
+    
+    return fig 
+
+
+
+dn = dt.datetime(2019, 4, 1, 0, 0)
+
+
+
+def plot_nucleos_from_data(ax, dn):
+    
+    infile = f'GOES/data/nucleos/{dn.year}'
+    
+    df = b.load(infile)
+    
+    df['Lon'] = (df['x1'] + df['x0']) / 2
+    df['Lat'] = (df['y1'] + df['y0']) / 2
+    
+    ds = df.loc[df.index == dn]
+    
     ax.set(title = ds.index[0])
-    # plot_contours(ax, fig)
     
-    lon_min, lon_max = -80, -40
-    
-    ds = limits(ds, 
-              x0 = lon_min, 
-              x1 = lon_max, 
-              y0 = -20, y1 = -10)
-    
-    # count = 0
     for index, row in ds.iterrows():
         
         gs.plot_regions(
@@ -84,32 +132,4 @@ def plot_top_cloud_map(ds):
         my = (row['y1'] + row['y0']) / 2
         ax.scatter(mx, my, s = 100, color = 'red')
     
-    
-    
-    latitudes = range(-50, 21, 10)
-    
-   
-    for lat in latitudes:
-        rect = mpatches.Rectangle(
-            xy=(lon_min, lat),  
-            width=lon_max - lon_min, 
-            height=10,  
-            edgecolor='blue',
-            facecolor='none',
-            linewidth = 4
-        )
-        ax.add_patch(rect)
-
-import datetime as dt 
-
-dn = dt.datetime(2019, 4, 1, 0, 0)
-
-infile ='GOES/data/nucleos/2019'
-df = b.load(infile)
-df['Lon'] = (df['x1'] + df['x0']) / 2
-df['Lat'] = (df['y1'] + df['y0']) / 2
-ds = df.loc[df.index == dn]
-
-    
-    
-plot_top_cloud_map(ds)
+fig = plot_top_cloud_map()

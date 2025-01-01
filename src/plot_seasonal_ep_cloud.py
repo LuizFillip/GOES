@@ -8,7 +8,7 @@ import base as b
 
 b.config_labels(fontsize = 25)
 pathfile = r"F:/SABER_ALL_DATA/SABER_PROCESS_EP_DAILY_2024/Trabalho_Luiz/Plots/"  
-# os.makedirs(pathfile, exist_ok=True)  # Ensure the directory exists
+
 
 def load(infile, date_index = False):
     
@@ -41,8 +41,8 @@ def limits(df,
 
 x0 = -80
 x1 = -40
-y0 = -20
-y1 = -10
+y0 = -50
+y1 = 20
 
 
 path_nucleos = 'GOES/data/nucleos/'
@@ -64,6 +64,8 @@ def potential_energy(year = 2019, sample = 'M'):
         )
     
     df = limits(df, x0, x1 , y0, y1)
+    
+    # print(df['Lat'].min(), df['Lat'].max())
     
     return df.resample(sample).mean()
 
@@ -98,7 +100,7 @@ def plot_seasonal(df, ds, title):
         )
 
     ax.set(
-        ylim = [30, 100], 
+        ylim = [0, 100], 
         ylabel = r'Convective activity (%)',
         xlabel = 'Years'
         )
@@ -107,7 +109,7 @@ def plot_seasonal(df, ds, title):
     ax1 = ax.twinx()
     sds = gaussian_filter(ds, sigma = 1)
     
-    ax1.plot(ds.index, sds,  lw = 3, color = 'red')
+    ax1.plot(ds.index, sds, lw = 3, color = 'red')
     
     io = f': Lat = {y0}/{y1}, Lon = {x0}/{x1}'
     
@@ -124,7 +126,6 @@ def plot_seasonal(df, ds, title):
     correlation = np.corrcoef(x, y)[0, 1]
     corr_text = f'Correlation: {correlation:.3f}'
     
-    # Add the correlation to the top-right corner
     ax.text(
          0.95, 0.05, 
          corr_text, 
@@ -155,8 +156,11 @@ def get_couples(col, sample = 'M'):
     
     return pd.concat(out_1), pd.concat(out_2)
 
-cols = ['mean_20_30', 'mean_30_40', 'mean_40_50', 'mean_50_60', 'mean_60_70', 
-        'mean_70_80', 'mean_80_90', 'mean_90_100', 'mean_100_110']
+cols = ['mean_20_30', 'mean_30_40', 
+        'mean_40_50', 'mean_50_60', 
+        'mean_60_70', 'mean_70_80', 
+        'mean_80_90', 'mean_90_100', 
+        'mean_100_110']
 
 save = False 
 
@@ -172,6 +176,7 @@ def plot_figures_by_col(cols):
             output_path = os.path.join(pathfile, f"fig_{i}.png")
             save_figures(fig, output_path)
 
-col = 'mean_90_110'
-df, ds = get_couples(col)
-fig = plot_seasonal(df, ds, title = col)
+# col = 'mean_90_110'
+# col = 'mean_60_90'
+# df, ds = get_couples(col)
+# fig = plot_seasonal(df, ds, title = col)
