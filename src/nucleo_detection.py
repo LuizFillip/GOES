@@ -57,7 +57,7 @@ def find_nucleos(
     
     ds['time'] = dn
     
-    return ds.set_index('time')
+    return ds.set_index('time').dropna()
         
 
 def nucleos_catalog(fname):
@@ -128,15 +128,16 @@ fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904010030.nc'
 dn = gs.fname2date(fname)
 ds = gs.CloudyTemperature(fname)
 dat, lon, lat = ds.data, ds.lon, ds.lat
+lat = lat[::-1]
 
 df = find_nucleos(
         dat, 
         lon, 
         lat,
         dn,
-        area_threshold = 10,
+        area_threshold = 100,
         temp_threshold = -30,
         by_indexes = True
         )
 
-df.dropna()
+df.to_csv('test_1')

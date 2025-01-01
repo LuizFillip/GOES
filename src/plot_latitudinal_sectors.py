@@ -1,14 +1,13 @@
 import GOES  as gs
-from matplotlib import cm
 import cartopy.crs as ccrs
 import base as b 
 import matplotlib.pyplot as plt 
-import numpy as np 
 import GEO as gg 
 import matplotlib.patches as mpatches
 import datetime as dt 
 
 def plot_contours(ax, fig):
+
     fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904010030.nc'
 
     ds = gs.CloudyTemperature(fname)
@@ -29,15 +28,7 @@ def plot_contours(ax, fig):
     
     ax.set(title = ds.dn)
     
-def limits(
-        df, 
-           x0 = -80, x1 = -40, 
-           y0 = -10, y1 = 0):
-    
-    return  df.loc[
-        ((df['Lon'] > x0) & (df['Lon'] < x1)) &
-        ((df['Lat'] > y0) & (df['Lat'] < y1))
-        ]
+
 
 def plot_sectors( 
         ax, 
@@ -92,8 +83,8 @@ def plot_top_cloud_map(
        degress = None
         )
     
-    plot_contours(ax, fig)
-    
+    # plot_contours(ax, fig)
+    plot_nucleos_from_data(ax)
  
     
     return fig 
@@ -104,20 +95,12 @@ dn = dt.datetime(2019, 4, 1, 0, 0)
 
 
 
-def plot_nucleos_from_data(ax, dn):
+def plot_nucleos_from_data(ax):
     
-    infile = f'GOES/data/nucleos/{dn.year}'
-    
+    infile = 'test_1'
     df = b.load(infile)
     
-    df['Lon'] = (df['x1'] + df['x0']) / 2
-    df['Lat'] = (df['y1'] + df['y0']) / 2
-    
-    ds = df.loc[df.index == dn]
-    
-    ax.set(title = ds.index[0])
-    
-    for index, row in ds.iterrows():
+    for index, row in df.iterrows():
         
         gs.plot_regions(
             ax,
@@ -130,6 +113,7 @@ def plot_nucleos_from_data(ax, dn):
         
         mx = (row['x1'] + row['x0']) / 2
         my = (row['y1'] + row['y0']) / 2
-        ax.scatter(mx, my, s = 100, color = 'red')
-    
+        ax.scatter(mx, my, s = 30, color = 'red')
+    return None 
+
 fig = plot_top_cloud_map()
