@@ -43,15 +43,15 @@ def find_nucleos(
             y_stt, y_end = lats[y_stt], lats[y_end] 
         
         area = abs((y_end - y_stt) * (x_end - x_stt))
-        area *= 111.11**2
-        
         
         if area > area_threshold:
             out.append([x_stt, x_end, 
                         y_stt, y_end, 
                         area, avg_temp])
             
-    columns = ['x0', 'x1', 'y0', 'y1', 'area', 'temp']
+    columns = ['lon_min', 'lon_max', 
+               'lat_min', 'lat_max', 
+               'area', 'temp']
     
     ds = pd.DataFrame(out, columns = columns)
     
@@ -71,7 +71,10 @@ def nucleos_catalog(fname):
             data, 
             lons, 
             lats[::-1], 
-            ds.dn
+            ds.dn,
+            area_threshold = 1,
+            temp_threshold = -30,
+            by_indexes = True
             )
 
     return ds 
@@ -88,17 +91,27 @@ def walk_goes(dn, b = 'E'):
 
 
 def run_nucleos(dn, b = 'E'):
+    root = 'GOES/data/'
+          
+    path_year = f'{root}{dn.year}/'
+    
+    b.make_dir(path_year)
+    
     io = dn.strftime('%Y-%m')
+    
     out = []
+    
     for file in tqdm(walk_goes(dn, b), io):
         try:
             out.append(nucleos_catalog(file))
         except:
             continue
-    return pd.concat(out)
-
-
-
+        
+    df = pd.concat(out)
+    
+    df.to_csv(f'{path_year}{dn.month}') 
+    
+    return df 
 
 def start_process(year):
     
@@ -123,21 +136,20 @@ def start_process(year):
 
 
 # start_process(2022)
-
-fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904010030.nc'
-dn = gs.fname2date(fname)
-ds = gs.CloudyTemperature(fname)
-dat, lon, lat = ds.data, ds.lon, ds.lat
-lat = lat[::-1]
-
-df = find_nucleos(
-        dat, 
-        lon, 
-        lat,
-        dn,
-        area_threshold = 100,
-        temp_threshold = -30,
-        by_indexes = True
-        )
-
-df.to_csv('test_1')
+def test_run():
+    fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904010030.nc'
+    dn = gs.fname2date(fname)
+    ds = gs.CloudyTemperature(fname)
+    dat, lon, lat = ds.data, ds.lon, ds.lat
+    lat = lat[::-1]
+    
+    df = find_nucleos(
+            dat, 
+            lon, 
+            lat,
+            dn,
+            area_threshold = 1,
+            temp_threshold = -30,
+            by_indexes = True
+            )
+    
