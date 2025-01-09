@@ -3,24 +3,49 @@ import datetime as dt
 import GOES as gs 
 from time import time 
 import os 
+import base as b 
+from tqdm import tqdm 
 
-def woon_dowload(year = 2013):
+def join_data(year):
+    root_save = 'GOES/data/'
+    path_to_save = '{root_save}/nucleos2'
+    b.make_dir(path_to_save )
+    infile = f'{root_save}/{year}/'
+    
+    out = []
+    io = 'Joining'
+    
+    for file in tqdm(os.listdir(infile), io):
+        
+        out.append(b.load(infile + file))
+        
+    df = pd.concat(out)
+    
+    df.to_csv(f'{path_to_save}/{year}')
+        
+    return None 
+
+def woon_dowload(year = 2013, B = 'E'):
     s = time()
     
     dates = pd.date_range(
         dt.datetime(year, 1, 1),
-        dt.datetime(year, 2, 1), 
+        dt.datetime(year, 12, 31), 
         freq = '1M'
         )
     
     for dn in dates:
-        print('Download')
-        gs.dowloadGOES(dn, B = 'E')
-        print('Get_nucleos')
-        gs.run_nucleos(dn, b = 'E')
+        print('Starting', dn.strftime('%Y-%m'))
+        gs.dowloadGOES(dn, B)
+        gs.run_nucleos(dn, B)
+    
+    join_data(year)
     
     e = time()
     
     print((e - s)/ 3600, 'hours')
     
-woon_dowload(year = 2013)
+    return None 
+    
+woon_dowload(year = 2014)
+
