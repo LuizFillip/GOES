@@ -1,11 +1,7 @@
 import base as b 
 import os 
-from time import time
 import Webscrape as wb 
-import datetime as dt 
 from tqdm import tqdm 
-import pandas as pd 
-
 
 def goesURL(str_yr, str_mn):
     
@@ -34,11 +30,10 @@ def dowloadGOES(dn,  B = 'E'):
     b.make_dir(path_mn)
     url = goesURL(str_yr, str_mn)
     
-    info = f'{str_mn}-{str_yr}'
+    info = 'Download'
     out = []
     
     files = os.listdir(path_mn)
-  
     
     for href in tqdm(wb.request(url), info):
    
@@ -53,26 +48,10 @@ def dowloadGOES(dn,  B = 'E'):
                     path_mn
                     )
             else:
-                print(href, 'done')
+                pass
             
    
-    return None 
+    return path_mn
 
-def woon_dowload():
-    s = time()
+
     
-    dates = pd.date_range(
-        dt.datetime(2004, 1, 1),
-        dt.datetime(2004, 12, 4), 
-        freq = '1M'
-        )
-    
-    for dn in dates:
-        dowloadGOES(dn, B = 'E')
-    
-    e = time()
-    
-    print((e - s)/ 3600, 'hours')
-    
-    
-# woon_dowload()

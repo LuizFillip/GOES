@@ -31,7 +31,11 @@ def find_nucleos(
         y_stt, y_end = region[0].start, region[0].stop
         
         dat  = data[x_stt: x_end, y_stt: y_end]
-        avg_temp = np.nanmean(dat)
+        
+        if dat.size > 0 and not np.all(np.isnan(dat)):
+            avg_temp = np.nanmean(dat)
+        else:
+            avg_temp = np.nan 
         
         if by_indexes:
             if (x_end == xmax):
@@ -80,28 +84,28 @@ def nucleos_catalog(fname):
     return ds 
   
 
-def walk_goes(dn, b = 'E'):
+def walk_goes(dn, B = 'E'):
     
     mn = dn.strftime("%m")
     yr = dn.strftime("%Y")
     
-    path =  f'{b}:\\database\\goes\\{yr}\\{mn}\\'
+    path =  f'{B}:\\database\\goes\\{yr}\\{mn}\\'
     
     return [os.path.join(path, f) for f in os.listdir(path)]
 
 
-def run_nucleos(dn, b = 'E'):
+def run_nucleos(dn, B = 'E'):
     root = 'GOES/data/'
           
     path_year = f'{root}{dn.year}/'
     
     b.make_dir(path_year)
     
-    io = dn.strftime('%Y-%m')
+    io = 'Detection'
     
     out = []
     
-    for file in tqdm(walk_goes(dn, b), io):
+    for file in tqdm(walk_goes(dn, B), io):
         try:
             out.append(nucleos_catalog(file))
         except:
@@ -128,7 +132,7 @@ def start_process(year):
         )
     
     for dn in dates:
-        df = run_nucleos(dn, b = 'D')
+        df = run_nucleos(dn, B = 'D')
         
         df.to_csv(f'{path_year}{dn.month}') 
     

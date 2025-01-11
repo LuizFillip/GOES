@@ -41,10 +41,9 @@ def plot_sectors(
 
     latitudes = range(lat_min, lat_max + 1, height)
     
-    
     for i, lat in enumerate(latitudes):
         rect = mpatches.Rectangle(
-            xy=(lon_min, lat),  
+            xy = (lon_min, lat),  
             width = lon_max - lon_min, 
             height = height,  
             edgecolor = 'blue',
