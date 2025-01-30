@@ -6,7 +6,14 @@ import matplotlib.pyplot as plt
 
 b.config_labels(fontsize = 22)
 
-def ep_data(key):
+def ep_data(
+        year = 2013,
+        lat_min = -10,
+        lat_max = 0
+        ):
+    
+    key = f'Latitudinal_Monthly_Means_{abs(lat_min)}_{abs(lat_max)}'
+    
     raw = scipy.io.loadmat('GOES/data/Monthly_Mean_EP.mat')
 
     values = raw[key][0][0]
@@ -23,7 +30,7 @@ def ep_data(key):
     
     ds = pd.DataFrame(data, index = index, columns = heights)
     
-    return ds.loc[ds.index.year == 2013]
+    return ds.loc[ds.index.year == year]
 
 
 def filter_space(
@@ -69,7 +76,9 @@ def filter_temperature(df, temp, step  = 10):
         ]
     
 
-def filter_areas(area = 100):
+def filter_areas(
+        df, 
+        area = 100):
     
     a1 = df.loc[
         (df['area'] > 0 ) & 
@@ -97,9 +106,9 @@ def corr_for_each_height(df, ds, temp = -50):
     
     heights = np.arange(20, 111)
     
-    filtered_data = filter_temperature(df, temp, step  = 10)
+    # filtered_data = filter_temperature(df, temp, step  = 10)
     
-    nucleos = to_percent(filtered_data)
+    nucleos = to_percent(df)
     
     x = nucleos.values 
     
@@ -138,35 +147,36 @@ def plot_correlation_height(
 
 
 
-def plot_latitudes(ax, lat, temp):
+def plot_latitudes(year, ax, lat, temp):
     
     
     lat_min = lat
     lat_max = lat + 10
     ds = load_nucleos(
+        year,
         lat_min = lat_min,
         lat_max = lat_max
         )
     
-    key = f'Latitudinal_Monthly_Means_{abs(lat_min)}_{abs(lat_max)}'
     
     name = f'{lat_min}/{lat_max}'
-    for temp in np.arange(-80, -20, 10):
-        try:
-            plot_correlation_height(
-                ax, 
-                ep_data(key), 
-                ds, 
-                temp, name
-                )
-        except:
-            pass 
+    # for temp in np.arange(-80, -20, 10):
+    temp = -30
+    # try:
+    plot_correlation_height(
+        ax, 
+        ep_data(year, lat_min, lat_max), 
+        ds, 
+        temp, name
+        )
+        # except:
+        #     pass 
         
 
 temp = -60 
 lats = np.arange(-40, 20, 10 )
 
-def plot_latitudes_corr_for_temp():
+def plot_latitudes_corr_for_temp(year):
     
     fig, ax = plt.subplots(
         dpi = 300, 
@@ -181,7 +191,7 @@ def plot_latitudes_corr_for_temp():
     
     for i, ax in enumerate(ax.flat):
         
-        plot_latitudes(ax, lats[i], temp)   
+        plot_latitudes(year, ax, lats[i], temp)   
     
     fontsize = 40
     
@@ -198,9 +208,31 @@ def plot_latitudes_corr_for_temp():
         fontsize = fontsize
         )
     
+    fig.suptitle(year)
+
+# year = 2014
+
+# lat_min = -10
+# lat_max = 0
+
 # df = load_nucleos(
-#         year = 2013,
+#         year = 2014,
 #         lat_min = -10,
 #         lat_max = 0
 #     )
 
+# df
+
+
+
+# ds = ep_data(
+#         year = 2014,
+#         lat_min = -10,
+#         lat_max = 0)
+
+# ds
+
+# corr_for_each_height(df, ds, temp = -50)
+
+
+#plot_latitudes_corr_for_temp(2017)
