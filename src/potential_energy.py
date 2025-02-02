@@ -55,7 +55,6 @@ def epbs(sample = '1M'):
     return df.resample(sample).size()
 
     
-sample = '15D'
 
 def save_avg_ep():
     out = []
@@ -76,35 +75,16 @@ def save_avg_ep():
     df1 = pd.concat(out)
     df1.to_csv('GOES/data/ep_avg_15')
 
-# f, ax = plt.subplots(figsize = (16, 8))
-df1 = epbs(sample)
-
-# df1 = b.load('GOES/data/ep_avg_15')
 
 
-# 
-
-
-#
-
-# # ds = ds.loc[~(ds['ep'] > 10.5)]
-
-def plot_scatter(ds):
+def plot_scatter_quadratic(ds):
     
-    y, x = ds['ep'].values, ds['pb'].values
-
-# plt.scatter(x_vls, y_vls)
-
-    # fit = b.linear_fit(y, x)
+    def r2_score(y, y_pred):
+        ss_res = np.sum((y - y_pred) ** 2)  
+        ss_tot = np.sum((y - np.mean(y)) ** 2)  
+        return 1 - (ss_res / ss_tot)
     
-    # plt.plot(
-    #     x_vls, 
-    #     fit.y_pred,
-    #     lw = 2, 
-    #     color = 'red'
-    #     )
-    
-    # fit.r2_score
+    x, y = ds['ep'].values, ds['pb'].values
 
     coeffs = np.polyfit(x, y, 2)
     
@@ -116,42 +96,89 @@ def plot_scatter(ds):
     x_fit = np.linspace(min(x), max(x), 100)
     y_fit = np.polyval(coeffs, x_fit)
     
-    plt.scatter(x, y, color='red', label="Data")
-    plt.plot(x_fit, y_fit, label="Quadratic Fit", color="blue")
+    plt.scatter(x, y, color='k', label="Data")
+    plt.plot(x_fit, y_fit, label="Quadratic Fit", color="r")
     
     y_pred = np.polyval(coeffs, x)
     
     print(r2_score(y, y_pred))
-def r2_score(y, y_pred):
-    ss_res = np.sum((y - y_pred) ** 2)  # Residual sum of squares
-    ss_tot = np.sum((y - np.mean(y)) ** 2)  # Total sum of squares
-    return 1 - (ss_res / ss_tot)
 
-# r2
+def get_averages_from_data(df2, df1):
+   
+    avg_results = {}
+    
+    vls = df1.index
+    
+    for i in range(len(vls) - 1):
+        start_date = vls[i]
+        end_date = vls[i + 1]
+        
+        subset = df2.loc[(df2.index >= start_date) & 
+                          (df2.index <= end_date)]
+        
+        if not subset.empty:
+            avg_results[start_date] = subset.mean()
+    
+    
+    return pd.DataFrame(avg_results).T
+
+
+def plot_linear_scatter(ds):
+    
+    fig, ax = plt.subplots(dpi = 300)
+    
+    mean = ds.groupby("pb")["ep"].mean()
+    print(mean)
+    y, x  = ds['ep'].values, ds['pb'].values
+    
+    ax.scatter(x, y)
+    
+    fit = b.linear_fit(x, y)
+    
+    ax.plot(
+        x, 
+        fit.y_pred,
+        lw = 2, 
+        color = 'red', 
+        label = 'linear fit'
+        )
+    
+    ax.set(
+        ylabel = 'Ep (J/k)', 
+        xlabel = 'Midnight EPBs', 
+        xlim = [-1, 15], 
+        ylim = [8, 15]
+        )
+    
+    print(fit.r2_score) 
+    
+def plot_seasonal_corr():  
+    f, ax = plt.subplots(figsize = (12, 6))
+    
+    ax.plot(ds['pb'])
+    
+    ax1 = ax.twinx()
+    
+    ax1.plot(ds['ep'], color = 'red')
+
+#
+
+sample = '15D'
+df1 = epbs(sample)
 
 df2 = b.load('GOES/data/ep_all')
 
+df2 = df2.between_time('18:00', '05:00')
 
-avg_results = {}
+df2 = get_averages_from_data(df2, df1)
 
-vls = df1.index
+col = 'mean_90_110'
+# col = 'mean_60_90'
+# col = 'mean_20_60'
+ds = pd.concat([df2[col], df1], axis = 1).dropna()
 
-for i in range(len(vls) - 1):
-    start_date = vls[i]
-    end_date = vls[i + 1]
-    
-    subset = df2.loc[(df2.index >= start_date) & 
-                      (df2.index <= end_date)]
-    
-    # Compute mean values for the range
-    if not subset.empty:
-        avg_results[start_date] = subset.mean()
+ds = ds.rename(columns = {col: 'ep', 0: 'pb'})
 
-# Convert dictionary to DataFrame
-df_avg = pd.DataFrame(avg_results).T
+plot_linear_scatter(ds)
 
-ds = pd.concat([df_avg['mean_60_90'], df1], axis = 1).dropna()
-
-ds = ds.rename(columns = {'mean_60_90': 'ep', 0: 'pb'})
-
-ds.plot()
+# plot_scatter_quadratic(ds)
