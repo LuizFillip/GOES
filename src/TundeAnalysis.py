@@ -88,7 +88,7 @@ def size_by_grid(
 def plot_map(ax, ds, year = 2013):
 
     lat_lims = dict(min = -40, max = 20, stp = 10)
-    lon_lims = dict(min = -80, max = -40, stp = 10) 
+    lon_lims = dict(min = -90, max = -40, stp = 10) 
     
     gg.map_attrs(
        ax, 
@@ -105,7 +105,6 @@ def plot_map(ax, ds, year = 2013):
         ds.columns, 
         ds.index, 
         ds.values, 
-        # levels = np.arange(3, 20, 5),
         cmap = 'jet'
         )
     
@@ -134,8 +133,8 @@ def set_data(ds, step = 3, values = 'mean_60_90'):
 def plot_seasonal_occurrence(
         ax, 
         ds,
-        year = 2013,
-        step = 2
+        step = 2, 
+        values = 'mean_90_110'
         ):
     
    
@@ -155,13 +154,20 @@ def plot_seasonal_occurrence(
        
         df = ds.loc[ds.index.month.isin(value)]
         
-        plot_map(axes[i], set_data(df, step = step)) 
+        plot_map(
+            axes[i], 
+            set_data(
+                df, 
+                step = step, 
+                values = values
+                )
+            ) 
                     
         l = b.chars()[i]
         
         axes[i].set_title(
-            f'({l}) {key} ({year})', 
-            fontsize = 20
+            f'({l}) {key}', 
+            fontsize = 30
             )
             
         
@@ -200,7 +206,7 @@ ds = gs.limits(
     y0 = -40, y1 = 20
     )
 
-plot_seasonal_occurrence(axs, ds, year = 2013, step = 4)
+plot_seasonal_occurrence(axs, ds, step = 3)
 
 b.fig_colorbar(
         fig,
