@@ -108,15 +108,6 @@ save = False
 
 cols = ['mean_20_60', 'mean_60_90', 'mean_90_110']
 
-def plot_figures_by_col(cols):
-    
-    for i, col in enumerate(cols):
-        df, ds = get_couples(col)
-        fig = plot_seasonal(df, ds, title = col)
-        
-        if save:
-            output_path = os.path.join(pathfile, f"fig_{i}.png")
-            save_figures(fig, output_path)
 
 col = 'mean_90_110'
 # col = 'mean_60_90'
@@ -128,4 +119,31 @@ col = 'mean_90_110'
 year = 2019
 ds = gs.load_nucleos(year)
 
-ds
+
+#%%%%
+
+
+ds1 = gs.filter_space(
+        ds, 
+        x0 = -80, 
+        x1 = -30, 
+        y0 = 0, 
+        y1 = 10
+        )
+
+def to_percent(df, sample ='1M'):
+    df = df.resample(sample).size() 
+    return (df / df.values.max()) * 100
+
+def filter_temperature(df, temp, step  = 10):
+ 
+    return df.loc[
+        (df['temp'] < temp) & 
+        (df['temp'] > temp - step)
+        ]
+temp = -60
+
+ds1 = filter_temperature(ds1, temp, step  = 10)
+
+to_percent(ds1).plot()
+
