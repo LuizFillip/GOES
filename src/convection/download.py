@@ -13,7 +13,7 @@ def goesURL(str_yr, str_mn):
         base += 'goes12/retangular_4km/ch4_bin/'
     if (year >= 2013) and (year < 2018):
         base += 'goes13/retangular_4km/ch4_bin/'
-    if (year > 2018):
+    if (year >= 2018):
         base += 'goes16/retangular/ch13/'
         
     return f'{base}{str_yr}/{str_mn}/'

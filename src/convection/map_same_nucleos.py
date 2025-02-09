@@ -153,15 +153,3 @@ def run_years_convective():
     return pd.concat(out)
     
     
-# df = run_years_convective()
-
-# df.to_csv('nucleos2')
-
-    
-# df = load_tunde(infile)
-# for index, row in df1.iterrows():
-    
-# df1['mean_90_110'].max()
-# df['mean_60_90'].resample('15D').mean().plot(figsize = (15, 8))
-
-
