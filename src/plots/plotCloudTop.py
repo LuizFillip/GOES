@@ -284,6 +284,12 @@ def test_plot(fname, temp = -30):
         
     return fig 
 
-# fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904010030.nc'
+import datetime as dt 
+
+dn = dt.datetime(2018,1,7,19,45)
+folder = dn.strftime('%Y\\%m\\S10635346_%Y%m%d%H%M.nc')
+fname = f'E:\\database\\goes\\{folder}'
 
 # fig = test_plot(fname, temp = -30)
+
+fname 
