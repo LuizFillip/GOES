@@ -1,55 +1,16 @@
 import base as b 
 import pandas as pd 
 import matplotlib.pyplot as plt 
-
-def select_sectors(
-        df, 
-        lat_min = -20, 
-        lat_max = -10, 
-        lon_min = -80, 
-        lon_max = -30
-        ):
-      
-    
-    ds = df.loc[
-        ((df['Lon'] > lon_min) & 
-         (df['Lon'] < lon_max)) &
-        ((df['Lat'] > lat_min) & 
-         (df['Lat'] < lat_max))
-        ]
-    return ds 
-
-def load_nucleos(year):
-    
-    infile = f'GOES/data/nucleos/{year}'
-    
-    df = b.load(infile)
-    
-    df['Lon'] = (df['x1'] + df['x0']) / 2
-    df['Lat'] = (df['y1'] + df['y0']) / 2
-    
-    return df 
+import GOES as gs 
 
 
 
-def count_in_sector(df, lat_min, sample = '1M'):
-    
-    ds = select_sectors(
-            df, 
-            lat_min = lat_min, 
-            lat_max = lat_min + 10, 
-            )
-    
-    ds = ds.resample(sample).size() 
-    
-    return (ds / ds.values.max()) * 100
 
-year = 2019
 
 
 def run_in_latitudes(year):
     
-    df = load_nucleos(year)
+    df = gs.load_nucleos(year)
     
     latitudes = range(-50, 21, 10)
     out = []
@@ -91,3 +52,67 @@ def plot_contour(ds):
     ax.set(ylabel = 'Date', xlabel = 'Latitude (°)')
     
     # df.to_csv('percent_latitudes_monthly')
+    
+year = 2018
+df = gs.load_nucleos(year)
+
+#%%%%
+
+df = df.loc[~(df['area'] > 2000)]
+
+def count_in_sector(ds, sample = '1M'):
+    
+    ds = ds.resample(sample).size() 
+    
+    return (ds / ds.values.max()) * 100
+
+ds = gs.filter_space(
+        df, 
+        x0 = -80, 
+        x1 = -40, 
+        y0 = 0, 
+        y1 = 10
+        )
+
+
+def select_temp(df, temp = -50):
+    return df.loc[(df['temp'] > temp) & 
+                  (df['temp'] < temp + 10)]
+
+def filter_areas(
+        df, 
+        area = 100):
+    
+    a1 = df.loc[
+        (df['area'] > 0 ) & 
+        (df['area'] < 100)
+        ]
+    
+    a2 = df.loc[
+        (df['area'] > 100 ) & 
+        (df['area'] < 200)
+        ]
+    
+    a3 = df.loc[
+        (df['area'] > 200 )
+        ]
+    
+    if area == 100:
+        
+        return a1
+    elif area == 200:
+        return a2 
+    else:
+        return a3
+
+print(ds['area'].plot(kind = 'hist'))
+
+# ds = select_temp(ds, temp = -70)
+
+
+#
+
+# count_in_sector(ds, sample = '15D').plot()
+
+
+ds.loc[ds['area'] > 1000]

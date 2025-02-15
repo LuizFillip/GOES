@@ -6,36 +6,24 @@ import numpy as np
 
 path_ep = 'GOES/data/Ep/'
 
-def limits(
+
+
+def select_sectors(
         df, 
-           x0 = -80, x1 = -40, 
-           y0 = -10, y1 = 0):
-    return  df.loc[
-        ((df['lon'] >= x0) & (df['lon'] < x1)) &
-        ((df['lat'] >= y0) & (df['lat'] <= y1))
+        lat_min = -20, 
+        lat_max = -10, 
+        lon_min = -80, 
+        lon_max = -30
+        ):
+      
+    ds = df.loc[
+        ((df['lon'] > lon_min) & 
+         (df['lon'] < lon_max)) &
+        ((df['lat'] > lat_min) & 
+         (df['lat'] < lat_max))
         ]
+    return ds 
 
-
-def potential_energy(year = 2019):
-    
-    df = pd.read_csv(f'{path_ep}{year}', sep = '\s+')
-
-    df.index = pd.to_datetime(
-        df['Date'] + ' ' + 
-        df[['Hour', 'Minute', 'Second']
-           ].astype(str).agg(':'.join, axis=1))
-    
-    df = df.drop(
-        columns = [
-        'Year', 'DOY', 'Date', 
-        'Hour', 'Minute', 'Second']
-        )
-    
-    df = df.rename(
-        columns = {'Lon': 'lon', 
-                   'Lat': 'lat'}
-        )
-    return df
 
 def epbs(sample = '1M'):
     
@@ -48,7 +36,8 @@ def epbs(sample = '1M'):
             year = 2022
             )
 
-    df['sum'] = df[[-50, -60, -70]].sum(axis = 1)
+    # df['sum'] = df[[-70]].sum(axis = 1)
+    
 
     df = df.loc[df.index.year <= 2022]
     
@@ -62,20 +51,20 @@ def save_avg_ep():
     
         df = potential_energy(year = year)
         
-        df =  limits(
-                df, 
-                x0 = -70, 
-                x1 = -40, 
-                y0 = -20, 
-                y1 = 10
-                )
+        # df =  limits(
+        #         df, 
+        #         x0 = -70, 
+        #         x1 = -40, 
+        #         y0 = -20, 
+        #         y1 = 10
+        #         )
         
         out.append(df)
         
     df1 = pd.concat(out)
-    df1.to_csv('GOES/data/ep_avg_15')
+    df1.to_csv('GOES/data/ep_avg')
 
-
+# save_avg_ep()
 
 def plot_scatter_quadratic(ds):
     
@@ -84,7 +73,7 @@ def plot_scatter_quadratic(ds):
         ss_tot = np.sum((y - np.mean(y)) ** 2)  
         return 1 - (ss_res / ss_tot)
     
-    x, y = ds['ep'].values, ds['pb'].values
+    y, x= ds['ep'].values, ds['pb'].values
 
     coeffs = np.polyfit(x, y, 2)
     
@@ -96,12 +85,21 @@ def plot_scatter_quadratic(ds):
     x_fit = np.linspace(min(x), max(x), 100)
     y_fit = np.polyval(coeffs, x_fit)
     
-    plt.scatter(x, y, color='k', label="Data")
-    plt.plot(x_fit, y_fit, label="Quadratic Fit", color="r")
+    f, ax = plt.subplots()
+    ax.scatter(x, y, color='k', label="Data")
+    ax.plot(x_fit, y_fit, label="Quadratic Fit", color="r")
     
     y_pred = np.polyval(coeffs, x)
     
     print(r2_score(y, y_pred))
+    
+    ax.set(
+        ylabel = 'Ep (J/k)', 
+        xlabel = 'Midnight EPBs', 
+        xlim = [-1, 15], 
+        ylim = [8, 15]
+        )
+    
 
 def get_averages_from_data(df2, df1):
    
@@ -127,9 +125,8 @@ def plot_linear_scatter(ds):
     
     fig, ax = plt.subplots(dpi = 300)
     
-    mean = ds.groupby("pb")["ep"].mean()
-    print(mean)
-    y, x  = ds['ep'].values, ds['pb'].values
+   
+    y, x  = ds['wave'].values, ds['epb'].values
     
     ax.scatter(x, y)
     
@@ -145,40 +142,104 @@ def plot_linear_scatter(ds):
     
     ax.set(
         ylabel = 'Ep (J/k)', 
-        xlabel = 'Midnight EPBs', 
-        xlim = [-1, 15], 
-        ylim = [8, 15]
+        xlabel = 'Midnight EPBs'
         )
+    ax.text(
+        0.1, 0.8, 
+            fit.r2_score, 
+            transform = ax.transAxes)
     
-    print(fit.r2_score) 
-    
-def plot_seasonal_corr():  
+def plot_seasonal_corr(ds):  
     f, ax = plt.subplots(figsize = (12, 6))
     
-    ax.plot(ds['pb'])
+    ax.bar(ds.index, ds['pb'], width = 12)
     
     ax1 = ax.twinx()
     
-    ax1.plot(ds['ep'], color = 'red')
+    # ax1.plot(ds['ep'], color = 'red')
 
-#
 
-sample = '15D'
-df1 = epbs(sample)
 
-df2 = b.load('GOES/data/ep_all')
+def join_epb_waves(
+        sample = '15D',
+        col = 'mean_90_110'
+        ):
+    df1 = epbs(sample)
+    
+    df2 = b.load('GOES/data/ep_avg')
+    
+    df2 = select_sectors(
+            df2, 
+            lat_min = -20, 
+            lat_max = 0, 
+            lon_min = -70, 
+            lon_max = -50
+            )
+    
+    df2 = df2.between_time('20:00', '05:00')
+    
+    df2 = get_averages_from_data(df2, df1)
 
-df2 = df2.between_time('18:00', '05:00')
+    ds = pd.concat([df2[col], df1], axis = 1).dropna()
+    
+    ds = ds.rename(
+        columns = {col: 'ep', 0: 'pb'}
+        )
+    
+    return ds 
 
-df2 = get_averages_from_data(df2, df1)
+
+
+cols = ['mean_20_60', 'mean_60_90', 'mean_90_110']
+
+def bubbles(stp = 'year'):
+    ds = b.load('database/epbs/events_class2')
+    
+    ds = pb.sel_typing(
+             ds, 
+             typing = 'midnight', 
+             indexes = False, 
+             year = 2022
+             )
+     
+
+    ds['month'] = ds.index.month
+    ds['year'] = ds.index.year
+    cols = [-70, -60, -50]
+    
+    ds = ds.groupby(stp)[cols].sum().sum(axis = 1)
+    
+    return ds.to_frame('epb')
+
+
+def waves(col, stp = 'year'):
+    df = b.load('GOES/data/ep_avg')
+    
+    df = select_sectors(
+            df, 
+            lat_min = -30, 
+            lat_max = 10, 
+            lon_min = -70, 
+            lon_max = -40
+            )
+    
+    df['month'] = df.index.month
+    df['year'] = df.index.year
+
+    df = df.groupby(stp)[col].mean()
+    
+    df = df.to_frame('wave')
+    return df
 
 col = 'mean_90_110'
-# col = 'mean_60_90'
-# col = 'mean_20_60'
-ds = pd.concat([df2[col], df1], axis = 1).dropna()
+col = 'mean_60_90'
+col = 'mean_20_60' 
 
-ds = ds.rename(columns = {col: 'ep', 0: 'pb'})
+
+data = [bubbles(), waves(col)]
+
+ds = pd.concat(data, axis = 1).dropna()
 
 plot_linear_scatter(ds)
 
-# plot_scatter_quadratic(ds)
+ds

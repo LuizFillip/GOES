@@ -1,6 +1,4 @@
-import cartopy.crs as ccrs
 import GEO as gg
-import matplotlib.pyplot as plt
 import base as b 
 import numpy as np 
 import pandas as pd 
@@ -69,25 +67,4 @@ def plot_map_contour(ax, df, year = 2019):
     
     return ax
 
-
-
-def set_data(df, step = 2):
-    
-    df['lon'] = (df['x1'] + df['x0']) / 2
-    df['lat'] = (df['y1'] + df['y0']) / 2
-    
-    ds = size_by_grid(df, step = step).dropna()
-    
-    ds = pd.pivot_table(
-        ds, 
-        columns = 'lon_bin', 
-        index = 'lat_bin', 
-        values = 'event_count'
-        )
-    
-    ds = ds.replace(np.nan, 0)
-    
-    ds = (ds / np.nanmax(ds.values)) * 100 
-    
-    return ds 
 

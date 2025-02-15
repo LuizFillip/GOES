@@ -120,9 +120,6 @@ year = 2019
 ds = gs.load_nucleos(year)
 
 
-#%%%%
-
-
 ds1 = gs.filter_space(
         ds, 
         x0 = -80, 

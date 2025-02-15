@@ -2,7 +2,6 @@ import gzip
 import numpy as np
 import pandas as pd 
 import datetime as dt 
-from tqdm import tqdm 
 import os 
 import xarray as xr
 
@@ -109,31 +108,5 @@ def load_files(ref_day):
         files  = [f for f in files if fname2date(f) < ref_day]
    
     return [os.path.join(path, f) for f in files]
-
-def CloudTopKeogram(files, lon = -55):
-    out = []
-    
-    for fname in tqdm(files, 'KEO'):
-
-        CT = CloudyTemperature(fname)
-        
-        ds = CT.to_dataset()
-        out.append(ds.loc[ds['lon'] == lon])
-     
-    ds = pd.concat(out)
-    
-    # # fig = plot_keogram(ds1, ax = None)
-    # time = ds1.columns
-    # time = [b.dn2float(t, sum_from = None) for t in time]
-    # lats = ds1.index
-    # data = ds1.values[::-1]
-    return pd.pivot_table(
-        ds, 
-        values = 'temp', 
-        columns = 'time', 
-        index = 'lat'
-        )
-
-
 
 

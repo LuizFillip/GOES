@@ -6,15 +6,6 @@ import datetime as dt
 from tqdm import tqdm 
 
 
-
-b.config_labels()
-
-
-
-
-    
-
-
 def coord_diff_on_data(df, threshold = 2):
 
     df['dx0'] =  df['x0'].diff().abs()

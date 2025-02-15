@@ -1,106 +1,11 @@
-import pandas as pd 
-import scipy.io
 import numpy as np 
 import base as b 
 import matplotlib.pyplot as plt 
+import GOES as gs
 
 b.config_labels(fontsize = 22)
 
-def ep_data(
-        year = 2013,
-        lat_min = -10,
-        lat_max = 0
-        ):
-    
-    key = f'Latitudinal_Monthly_Means_{abs(lat_min)}_{abs(lat_max)}'
-    
-    raw = scipy.io.loadmat('GOES/data/Monthly_Mean_EP.mat')
 
-    values = raw[key][0][0]
-    
-    data = values[4]
-    
-    index = pd.date_range(
-        '2013-01-01', 
-        '2022-12-31', 
-        freq = '1M'
-        )
-    
-    heights = np.arange(20, 111)
-    
-    ds = pd.DataFrame(data, index = index, columns = heights)
-    
-    return ds.loc[ds.index.year == year]
-
-
-def filter_space(
-        df, 
-        x0 = -80, 
-        x1 = -30, 
-        y0 = 10, 
-        y1 = 0
-        ):
-    return  df.loc[
-        ((df['Lon'] > x0) & (df['Lon'] < x1)) &
-        ((df['Lat'] > y0) & (df['Lat'] < y1))
-        ]
-
-def to_percent(df):
-    df = df.resample('1M').size() 
-    return (df / df.values.max()) * 100
-
-def load_nucleos(
-        year = 2013,
-        lat_min = -10,
-        lat_max = 0
-    ):
-    
-    df = b.load(f'GOES/data/nucleos2/{year}')
-    
-    df['Lon'] = (df['lon_max'] + df['lon_min']) / 2
-    df['Lat'] = (df['lat_max'] + df['lat_min']) / 2
-    
-    df = filter_space(
-        df, 
-        y0 = lat_min, 
-        y1 = lat_max
-        )
-    
-    return df 
-
-def filter_temperature(df, temp, step  = 10):
- 
-    return df.loc[
-        (df['temp'] < temp) & 
-        (df['temp'] > temp - step)
-        ]
-    
-
-def filter_areas(
-        df, 
-        area = 100):
-    
-    a1 = df.loc[
-        (df['area'] > 0 ) & 
-        (df['area'] < 100)
-        ]
-    
-    a2 = df.loc[
-        (df['area'] > 100 ) & 
-        (df['area'] < 200)
-        ]
-    
-    a3 = df.loc[
-        (df['area'] > 200 )
-        ]
-    
-    if area == 100:
-        
-        return a1
-    elif area == 200:
-        return a2 
-    else:
-        return a3
 
 def corr_for_each_height(df, ds, temp = -50):
     
@@ -108,7 +13,7 @@ def corr_for_each_height(df, ds, temp = -50):
     
     # filtered_data = filter_temperature(df, temp, step  = 10)
     
-    nucleos = to_percent(df)
+    nucleos = gs.to_percent(df)
     
     x = nucleos.values 
     
@@ -152,7 +57,7 @@ def plot_latitudes(year, ax, lat, temp):
     
     lat_min = lat
     lat_max = lat + 10
-    ds = load_nucleos(
+    ds = gs.load_nucleos(
         year,
         lat_min = lat_min,
         lat_max = lat_max
@@ -165,7 +70,7 @@ def plot_latitudes(year, ax, lat, temp):
     # try:
     plot_correlation_height(
         ax, 
-        ep_data(year, lat_min, lat_max), 
+        latitudinal_data_ep(year, lat_min, lat_max), 
         ds, 
         temp, name
         )
@@ -210,29 +115,5 @@ def plot_latitudes_corr_for_temp(year):
     
     fig.suptitle(year)
 
-# year = 2014
-
-# lat_min = -10
-# lat_max = 0
-
-# df = load_nucleos(
-#         year = 2014,
-#         lat_min = -10,
-#         lat_max = 0
-#     )
-
-# df
 
 
-
-# ds = ep_data(
-#         year = 2014,
-#         lat_min = -10,
-#         lat_max = 0)
-
-# ds
-
-# corr_for_each_height(df, ds, temp = -50)
-
-
-#plot_latitudes_corr_for_temp(2017)

@@ -40,10 +40,10 @@ def test_plot(fname, temp = -30):
         count += 1
         ptc.plot_regions(
             ax,
-            row['x0'], 
-            row['y0'],
-            row['x1'], 
-            row['y1'], 
+            row['lon_min'], 
+            row['lat_min'],
+            row['lon_max'], 
+            row['lat_max'], 
             # number = count
             # i = indexs
             )
@@ -52,10 +52,10 @@ def test_plot(fname, temp = -30):
 
 import datetime as dt 
 
-dn = dt.datetime(2018,1,7,19,45)
-folder = dn.strftime('%Y\\%m\\S10635346_%Y%m%d%H%M.nc')
-fname = f'E:\\database\\goes\\{folder}'
+def main():
+    dn = dt.datetime(2018,1,7,19,45)
+    folder = dn.strftime('%Y\\%m\\S10635346_%Y%m%d%H%M.nc')
+    fname = f'E:\\database\\goes\\{folder}'
+    
+    fig = test_plot(fname, temp = -40)
 
-# fig = test_plot(fname, temp = -30)
-
-fname 

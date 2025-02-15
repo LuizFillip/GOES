@@ -47,6 +47,6 @@ def save_maps(ref_day, B = 'D'):
 
 
 
-ref_day = dt.datetime(2021, 8, 3)
+# ref_day = dt.datetime(2021, 8, 3)
 
-save_maps(ref_day)
+# save_maps(ref_day)

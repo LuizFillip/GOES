@@ -5,15 +5,20 @@ def load(infile, date_index = False):
     
     try:
         df = pd.read_csv(infile, index_col = 0)
-        df.index = pd.to_datetime(df.index) #, format='ISO8601')
+        df.index = pd.to_datetime(df.index) 
+        
         
     except:
         df = pd.read_csv(
-            infile, delimiter = ';', index_col = 0
+            infile, 
+            delimiter = ';', 
+            index_col = 0
             )
-        df.index = pd.to_datetime(df.index, format='ISO8601')
-
-    
+        df.index = pd.to_datetime(
+            df.index, 
+            format = 'ISO8601'
+            )
+        
     if date_index:
         df.index = df.index.date
 
@@ -30,8 +35,8 @@ def filter_space(
         ):
     try:
         return  df.loc[
-            ((df['Lon'] > x0) & (df['Lon'] < x1)) &
-            ((df['Lat'] > y0) & (df['Lat'] < y1))
+            ((df['lon'] > x0) & (df['lon'] < x1)) &
+            ((df['lat'] > y0) & (df['lat'] < y1))
         ]
     except:
         return df.loc[
