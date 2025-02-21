@@ -25,46 +25,7 @@ def select_sectors(
     return ds 
 
 
-def epbs(sample = '1M'):
     
-    ds = b.load('database/epbs/events_class2')
-
-    df = pb.sel_typing(
-            ds, 
-            typing = 'midnight', 
-            indexes = False, 
-            year = 2022
-            )
-
-    # df['sum'] = df[[-70]].sum(axis = 1)
-    
-
-    df = df.loc[df.index.year <= 2022]
-    
-    return df.resample(sample).size()
-
-    
-
-def save_avg_ep():
-    out = []
-    for year in range(2013, 2023):
-    
-        df = potential_energy(year = year)
-        
-        # df =  limits(
-        #         df, 
-        #         x0 = -70, 
-        #         x1 = -40, 
-        #         y0 = -20, 
-        #         y1 = 10
-        #         )
-        
-        out.append(df)
-        
-    df1 = pd.concat(out)
-    df1.to_csv('GOES/data/ep_avg')
-
-# save_avg_ep()
 
 def plot_scatter_quadratic(ds):
     
@@ -73,7 +34,7 @@ def plot_scatter_quadratic(ds):
         ss_tot = np.sum((y - np.mean(y)) ** 2)  
         return 1 - (ss_res / ss_tot)
     
-    y, x= ds['ep'].values, ds['pb'].values
+    y, x = ds['wave'].values, ds['epb'].values
 
     coeffs = np.polyfit(x, y, 2)
     
@@ -121,14 +82,11 @@ def get_averages_from_data(df2, df1):
     return pd.DataFrame(avg_results).T
 
 
-def plot_linear_scatter(ds):
+def plot_linear_scatter(ax, ds):
     
-    fig, ax = plt.subplots(dpi = 300)
-    
-   
     y, x  = ds['wave'].values, ds['epb'].values
     
-    ax.scatter(x, y)
+    ax.scatter(x, y, marker = '^', s = 150)
     
     fit = b.linear_fit(x, y)
     
@@ -140,106 +98,81 @@ def plot_linear_scatter(ds):
         label = 'linear fit'
         )
     
-    ax.set(
-        ylabel = 'Ep (J/k)', 
-        xlabel = 'Midnight EPBs'
-        )
+  
+    r2 = fit.r2_score
     ax.text(
-        0.1, 0.8, 
-            fit.r2_score, 
-            transform = ax.transAxes)
-    
-def plot_seasonal_corr(ds):  
-    f, ax = plt.subplots(figsize = (12, 6))
-    
-    ax.bar(ds.index, ds['pb'], width = 12)
-    
-    ax1 = ax.twinx()
-    
-    # ax1.plot(ds['ep'], color = 'red')
-
-
-
-def join_epb_waves(
-        sample = '15D',
-        col = 'mean_90_110'
-        ):
-    df1 = epbs(sample)
-    
-    df2 = b.load('GOES/data/ep_avg')
-    
-    df2 = select_sectors(
-            df2, 
-            lat_min = -20, 
-            lat_max = 0, 
-            lon_min = -70, 
-            lon_max = -50
-            )
-    
-    df2 = df2.between_time('20:00', '05:00')
-    
-    df2 = get_averages_from_data(df2, df1)
-
-    ds = pd.concat([df2[col], df1], axis = 1).dropna()
-    
-    ds = ds.rename(
-        columns = {col: 'ep', 0: 'pb'}
+        0.5, 0.1, 
+        f'$R^2$ = {r2}', 
+        transform = ax.transAxes
         )
     
-    return ds 
-
-
-
-cols = ['mean_20_60', 'mean_60_90', 'mean_90_110']
-
-def bubbles(stp = 'year'):
-    ds = b.load('database/epbs/events_class2')
+    return ax
     
-    ds = pb.sel_typing(
-             ds, 
-             typing = 'midnight', 
-             indexes = False, 
-             year = 2022
-             )
-     
 
-    ds['month'] = ds.index.month
-    ds['year'] = ds.index.year
-    cols = [-70, -60, -50]
-    
-    ds = ds.groupby(stp)[cols].sum().sum(axis = 1)
-    
-    return ds.to_frame('epb')
-
-
-def waves(col, stp = 'year'):
+def waves(stp = 'year'):
     df = b.load('GOES/data/ep_avg')
     
     df = select_sectors(
             df, 
-            lat_min = -30, 
+            lat_min = -10, 
             lat_max = 10, 
-            lon_min = -70, 
+            lon_min = -80, 
             lon_max = -40
             )
     
-    df['month'] = df.index.month
-    df['year'] = df.index.year
-
-    df = df.groupby(stp)[col].mean()
+    df = df.loc[~((df['mean_90_110'] < 0) | 
+                  (df['mean_90_110'] > 100))]
     
-    df = df.to_frame('wave')
-    return df
+    df['month'] = df.index.month 
+    df['year'] = df.index.year
+    
+    df = df.between_time('18:00', '05:00')
+    
+    df = df.groupby([stp])['mean_90_110'].mean()
+    
+    return df.to_frame('wave')
 
-col = 'mean_90_110'
-col = 'mean_60_90'
-col = 'mean_20_60' 
+    
+def plot_seasonal_evolution(eb, wv):
+    fig, ax = plt.subplots(figsize = (14, 7), dpi = 300)
+    
+    ax.bar(eb.index, eb, width = 0.1)
+    
+    ax1 = ax.twinx()
+    
+    ax1.plot(wv.index, wv['mean_90_110'], lw = 2, color = 'red')
+
+def epbs(time = 'year'):
+    p = pb.BubblesPipe('events_5')
+    
+    ds = p.sel_type('midnight')
+    
+    df = p.time_group(ds, time = time)
+    
+    return df[[-70, -60, -50]].sum(axis = 1).to_frame('epb')
 
 
-data = [bubbles(), waves(col)]
+def join_data(stp):
 
-ds = pd.concat(data, axis = 1).dropna()
+    data = [epbs(stp), waves(stp)]
+    
+    return pd.concat(data, axis = 1)#.dropna()
 
-plot_linear_scatter(ds)
+fig, ax = plt.subplots(
+    figsize = (14, 6), 
+    ncols = 2,
+    dpi = 300, 
+    sharex = True, 
+    sharey = True 
+    )
 
-ds
+plt.subplots_adjust(wspace = 0.1)
+
+names = ['month', 'year']
+
+for i, name in enumerate(names):
+    
+    plot_linear_scatter(ax[i], join_data(name))
+    ax[i].set(title = name.title())
+    
+ax[0].set(ylabel = 'Average of Ep (J/Kg)')
