@@ -83,83 +83,202 @@ def get_averages_from_data(df2, df1):
 
 
 def plot_linear_scatter(ax, ds):
+    n = ds.columns[0] 
     
-    y, x  = ds['wave'].values, ds['epb'].values
+    y = ds.iloc[:, 0].values
+    x = ds.iloc[:, 1].values
     
     ax.scatter(x, y, marker = '^', s = 150)
     
     fit = b.linear_fit(x, y)
     
-    ax.plot(
+   
+    line, = ax.plot(
         x, 
         fit.y_pred,
         lw = 2, 
-        color = 'red', 
-        label = 'linear fit'
+        # color = 'red', 
+        label = f'{n}'
         )
     
-  
-    r2 = fit.r2_score
-    ax.text(
-        0.5, 0.1, 
-        f'$R^2$ = {r2}', 
-        transform = ax.transAxes
-        )
+    ax.set(xlim = [0, 80])
+    # 
     
-    return ax
     
+    return line.get_color(), fit.r2_score
 
-def waves(stp = 'year'):
-    df = b.load('GOES/data/ep_avg')
+class PotentialEnergy(object):
     
-    df = select_sectors(
-            df, 
-            lat_min = -10, 
-            lat_max = 10, 
-            lon_min = -80, 
-            lon_max = -40
-            )
+    def __init__(self):
+        
+        return 
     
-    df = df.loc[~((df['mean_90_110'] < 0) | 
-                  (df['mean_90_110'] > 100))]
+def group_by_time(
+        df, 
+        stp = 'month', 
+        col = '90_110', 
+        name = 'wave'
+        ):
+    
+    col = f'mean_{col}'
     
     df['month'] = df.index.month 
     df['year'] = df.index.year
     
-    df = df.between_time('18:00', '05:00')
+    df = df.between_time(
+        '18:00', '05:00')
     
-    df = df.groupby([stp])['mean_90_110'].mean()
+    df = df.groupby([stp])[col].mean()
+
+    return df.to_frame(name)
+
     
-    return df.to_frame('wave')
 
     
 def plot_seasonal_evolution(eb, wv):
-    fig, ax = plt.subplots(figsize = (14, 7), dpi = 300)
+    fig, ax = plt.subplots(
+        figsize = (14, 7), 
+        dpi = 300
+        )
     
     ax.bar(eb.index, eb, width = 0.1)
     
     ax1 = ax.twinx()
     
-    ax1.plot(wv.index, wv['mean_90_110'], lw = 2, color = 'red')
+    ax1.plot(
+        wv.index, wv['mean_90_110'], 
+        lw = 2, color = 'red')
 
-def epbs(time = 'year'):
+def epbs(time = 'year', total = True):
     p = pb.BubblesPipe('events_5')
     
     ds = p.sel_type('midnight')
     
     df = p.time_group(ds, time = time)
     
-    return df[[-70, -60, -50]].sum(axis = 1).to_frame('epb')
-
-
-def join_data(stp):
-
-    data = [epbs(stp), waves(stp)]
+    cols = [-70, -60, -50]
     
-    return pd.concat(data, axis = 1)#.dropna()
+    if total:
+        return df[cols].sum(
+        axis = 1).to_frame('All')
+    else:
+        return df 
+
+
+
+
+
+  
+
+
+
+def Ep_by_sectors(time = 'month', total = False):
+    
+    df = b.load('GOES/data/ep_avg')
+    
+    df = df.loc[~(
+        (df['mean_90_110'] < 0) | 
+        (df['mean_90_110'] > 100))
+        ]
+    
+    if total:
+        df = select_sectors(
+            df, 
+            lat_min = -10, 
+            lat_max = 10, 
+            lon_min = -70, 
+            lon_max = -40
+            )
+        
+        return group_by_time(
+                df, 
+                stp = time, 
+                col = '90_110', 
+                name = 'All'
+                )
+   
+    
+    year = 2013
+    out = []
+    for sector in np.arange(-80, -40, 10):
+        
+        ds = pb.filter_region(
+            df, year, sector)
+        
+        out.append(
+            group_by_time(
+                ds, 
+                stp = time, 
+                name = sector
+                )
+            )
+        
+    return pd.concat(out, axis = 1)
+
+
+
+
+
+def plot_all_sectors(ax, time):
+    
+    ds = Ep_by_sectors(
+        time = time, total = True)
+    
+    ds1 = epbs(
+        time = time, total = True)
+    
+    data = [ds, ds1]
+     
+    jj = pd.concat(data, axis = 1) 
+    
+    jj = jj.replace(np.nan, 0)
+    c, r2 = plot_linear_scatter(
+        ax, jj
+        )
+    
+    ax.text(
+        0.55, 0.3 + 0.1, 
+        f'$R^2$ = {r2}', 
+        color = c, 
+        transform = ax.transAxes
+        )
+    
+    return None 
+    
+def plot_sectors_div(ax, time):
+
+    ds = Ep_by_sectors(
+        time = time, 
+        total = False)
+    
+    ds1 = epbs(
+        time = time, 
+        total = False
+        )
+    
+    sectors =  np.arange(-70, -40, 10)
+    
+    for i, col in enumerate(sectors):
+        
+        data = [ds[col], ds1[col]]
+        
+        jj = pd.concat(data, axis = 1) 
+        
+        jj = jj.replace(np.nan, 0)
+        
+        c, r2 = plot_linear_scatter(
+            ax, jj
+            )
+        
+        ax.text(
+            0.55, 0.3 - (i/10), 
+            f'$R^2$ = {r2}', 
+            color = c, 
+            transform = ax.transAxes
+            )
 
 fig, ax = plt.subplots(
-    figsize = (14, 6), 
+    figsize = (16, 10), 
     ncols = 2,
     dpi = 300, 
     sharex = True, 
@@ -168,11 +287,26 @@ fig, ax = plt.subplots(
 
 plt.subplots_adjust(wspace = 0.1)
 
-names = ['month', 'year']
+ax[0].text(0.03, 0.9, '(a) Month', 
+           transform = ax[0].transAxes)
+plot_all_sectors(ax[0], time = 'month')
 
-for i, name in enumerate(names):
-    
-    plot_linear_scatter(ax[i], join_data(name))
-    ax[i].set(title = name.title())
-    
-ax[0].set(ylabel = 'Average of Ep (J/Kg)')
+plot_sectors_div(ax[0], time = 'month')
+
+ax[1].text(
+    0.03, 0.9, '(b) Year', 
+           transform = ax[1].transAxes)
+
+plot_all_sectors(ax[1], time = 'year')
+
+plot_sectors_div(ax[1], time = 'year')
+
+ax[0].set(ylim = [9, 14], xlim = [0, 120])
+
+ax[0].legend(
+    ncol = 4,
+    title = 'Sectors',
+    loc = 'upper center',
+    fontsize = 30,
+    bbox_to_anchor = (1, 1.2) 
+    )
