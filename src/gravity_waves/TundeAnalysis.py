@@ -3,46 +3,9 @@ import GEO as gg
 import matplotlib.pyplot as plt
 import base as b 
 import numpy as np 
-import core as c
 import GOES as gs
 import cartopy.crs as ccrs
 
-def plot_seasonal_Ep():
-
-    fig, ax = plt.subplots( 
-        sharex = True,
-        sharey = True,
-        figsize = (14, 8), 
-        dpi = 300
-        )
-        
-    years = [2013, 2019]
-    maks = ['s', 'o']
-    labl = ['Maximum', 'Minimum']
-    
-    for i, year in enumerate(years):
-        
-        df = c.potential_energy(year)
-        
-        ds = df['mean_90_110'].resample('1M').mean()
-        
-        ds.index = ds.index.month
-        
-        ax.plot(ds, lw = 2, 
-                label = f'Solar {labl[i]} - {year}',
-                markersize = 20, 
-                marker = maks[i], 
-             
-                )
-    
-    ax.legend(loc = 'upper right')
-    ax.set(
-           ylabel = 'Ep (J/Kg)', 
-           xticks = np.arange(1, 13, 1),
-           xlabel = 'Months')
-    
-    plt.show()
-    return fig
 
 def size_by_grid(
         df, 
@@ -184,44 +147,48 @@ def plot_seasonal_occurrence(
     return ax 
 
        
-        
-b.config_labels(fontsize = 25)
+def plot_seasonal_Ep_contours():
     
-fig, axs = plt.subplots(
-      dpi = 300, 
-      ncols = 3, 
-      nrows = 2, 
-      figsize = (13, 14),
-      subplot_kw = 
-      {'projection': ccrs.PlateCarree()}
-      )
+    b.config_labels(fontsize = 25)
+        
+    fig, axs = plt.subplots(
+          dpi = 300, 
+          ncols = 3, 
+          nrows = 2, 
+          figsize = (13, 12),
+          subplot_kw = 
+          {'projection': ccrs.PlateCarree()}
+          )
+    
+    plt.subplots_adjust(wspace = 0.1, hspace = 0.05)
+    
+    ds = b.load('GOES/data/ep_all')
+    
+    ds = gs.filter_space(
+            ds, 
+            x0 = -90, 
+            x1 = -35, 
+            y0 = -40, 
+            y1 = 25
+            )
+    
+    
+    plot_seasonal_occurrence(axs, ds, step = 3)
+    
+    b.fig_colorbar(
+            fig,
+            label = 'Ep (J/Kg)',
+            fontsize = 35,
+            vmin = 3, 
+            vmax = 18, 
+            step = 2,
+            orientation = "vertical", 
+            anchor = (.94, 0.15, 0.03, 0.69)
+            )
 
-plt.subplots_adjust(wspace = 0.1, hspace = 0.05)
+    name  = 'Seasonal averages 2013 to 2022'
+    
+    fig.suptitle(name, y = 1.1)
 
-ds = b.load('GOES/data/ep_all')
 
-ds = gs.limits(
-    ds,  
-    x0 = -90, x1 = -30, 
-    y0 = -40, y1 = 20
-    )
-
-plot_seasonal_occurrence(axs, ds, step = 3)
-
-b.fig_colorbar(
-        fig,
-        label = 'Ep (J/Kg)',
-        fontsize = 35,
-        vmin = 3, 
-        vmax = 18, 
-        step = 2,
-        orientation = "vertical", 
-        anchor = (.94, 0.13, 0.03, 0.73)
-        )
-
-# fig.suptitle(year, y = 1.1)
-
-year = 2015
-df = gs.potential_energy(year = year)
-
-# df
+plot_seasonal_Ep_contours()

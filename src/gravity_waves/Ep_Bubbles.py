@@ -81,14 +81,21 @@ def get_averages_from_data(df2, df1):
     
     return pd.DataFrame(avg_results).T
 
+nums = {-70: 3, -60: 2, -50: 1}
 
-def plot_linear_scatter(ax, ds):
-    n = ds.columns[0] 
+def plot_linear_scatter(ax, ds, marker):
     
+    n = ds.columns[0] 
+    label = f'({nums[n]}) {n}'
     y = ds.iloc[:, 0].values
     x = ds.iloc[:, 1].values
     
-    ax.scatter(x, y, marker = '^', s = 150)
+    ax.scatter(
+        x, y, 
+        marker = marker, 
+        s = 150, 
+        label = label
+        )
     
     fit = b.linear_fit(x, y)
     
@@ -97,14 +104,9 @@ def plot_linear_scatter(ax, ds):
         x, 
         fit.y_pred,
         lw = 2, 
-        # color = 'red', 
-        label = f'{n}'
+        label = label
         )
-    
-    ax.set(xlim = [0, 80])
-    # 
-    
-    
+
     return line.get_color(), fit.r2_score
 
 class PotentialEnergy(object):
@@ -150,7 +152,9 @@ def plot_seasonal_evolution(eb, wv):
         lw = 2, color = 'red')
 
 def epbs(time = 'year', total = True):
-    p = pb.BubblesPipe('events_5')
+    p = pb.BubblesPipe(
+        'events_5', 
+                       drop_lim = 0.2)
     
     ds = p.sel_type('midnight')
     
@@ -165,14 +169,10 @@ def epbs(time = 'year', total = True):
         return df 
 
 
-
-
-
-  
-
-
-
-def Ep_by_sectors(time = 'month', total = False):
+def Ep_by_sectors(
+        time = 'month', 
+        total = False
+        ):
     
     df = b.load('GOES/data/ep_avg')
     
@@ -198,7 +198,7 @@ def Ep_by_sectors(time = 'month', total = False):
                 )
    
     
-    year = 2013
+    year = 2016
     out = []
     for sector in np.arange(-80, -40, 10):
         
@@ -219,7 +219,7 @@ def Ep_by_sectors(time = 'month', total = False):
 
 
 
-def plot_all_sectors(ax, time):
+def plot_all_sectors(ax, time, marker = 'x'):
     
     ds = Ep_by_sectors(
         time = time, total = True)
@@ -233,11 +233,11 @@ def plot_all_sectors(ax, time):
     
     jj = jj.replace(np.nan, 0)
     c, r2 = plot_linear_scatter(
-        ax, jj
+        ax, jj, marker
         )
     
     ax.text(
-        0.55, 0.3 + 0.1, 
+        0.55, 0.2 + 0.1, 
         f'$R^2$ = {r2}', 
         color = c, 
         transform = ax.transAxes
@@ -257,7 +257,7 @@ def plot_sectors_div(ax, time):
         )
     
     sectors =  np.arange(-70, -40, 10)
-    
+    markers = ['^', 'o', 's']
     for i, col in enumerate(sectors):
         
         data = [ds[col], ds1[col]]
@@ -267,16 +267,33 @@ def plot_sectors_div(ax, time):
         jj = jj.replace(np.nan, 0)
         
         c, r2 = plot_linear_scatter(
-            ax, jj
+            ax, jj, markers[i]
             )
         
         ax.text(
-            0.55, 0.3 - (i/10), 
+            0.55, 0.2 - (i/10), 
             f'$R^2$ = {r2}', 
             color = c, 
             transform = ax.transAxes
             )
+    return None 
 
+def plot_time_column(
+        ax, 
+        time = 'month', 
+        l = '(a)'
+        ):
+    name =  f'{l} {time.title()}'
+    
+    ax.text(
+        0.03, 0.9, name, 
+        transform = ax.transAxes
+        )
+    plot_all_sectors(ax, time = time)
+    
+    plot_sectors_div(ax, time = time)
+
+    return None 
 fig, ax = plt.subplots(
     figsize = (16, 10), 
     ncols = 2,
@@ -287,21 +304,25 @@ fig, ax = plt.subplots(
 
 plt.subplots_adjust(wspace = 0.1)
 
-ax[0].text(0.03, 0.9, '(a) Month', 
-           transform = ax[0].transAxes)
-plot_all_sectors(ax[0], time = 'month')
 
-plot_sectors_div(ax[0], time = 'month')
 
-ax[1].text(
-    0.03, 0.9, '(b) Year', 
-           transform = ax[1].transAxes)
+plot_time_column(
+        ax[0], 
+        time = 'month', 
+        l = '(a)'
+        )
 
-plot_all_sectors(ax[1], time = 'year')
+plot_time_column(
+        ax[1], 
+        time = 'year', 
+        l = '(b)'
+        )
 
-plot_sectors_div(ax[1], time = 'year')
-
-ax[0].set(ylim = [9, 14], xlim = [0, 120])
+ax[0].set(
+    ylabel = 'Ep (J/kg)',
+    ylim = [9, 14], 
+    xlim = [0, 220]
+    )
 
 ax[0].legend(
     ncol = 4,
