@@ -51,7 +51,7 @@ def size_by_grid(
 def plot_map(ax, ds, year = 2013):
 
     lat_lims = dict(min = -40, max = 20, stp = 10)
-    lon_lims = dict(min = -90, max = -40, stp = 10) 
+    lon_lims = dict(min = -90, max = -30, stp = 15) 
     
     gg.map_attrs(
        ax, 
@@ -62,19 +62,24 @@ def plot_map(ax, ds, year = 2013):
        degress = None
         )
     
-    # gg.plot_rectangles_regions(ax, year, color = 'k')
+    gg.plot_rectangles_regions(ax, year, color = 'k')
 
     img = ax.contourf(
         ds.columns, 
         ds.index, 
         ds.values, 
+        levels = np.linspace(9, 14, 20),
         cmap = 'jet'
         )
     
     return img 
     
 
-def set_data(ds, step = 3, values = 'mean_60_90'):
+def set_data(
+        ds, 
+        step = 3, 
+        values = 'mean_60_90'
+        ):
     
     df = size_by_grid(
             ds, 
@@ -91,7 +96,22 @@ def set_data(ds, step = 3, values = 'mean_60_90'):
 
     return ds 
 
-
+def plot_big_square(axes):
+    x_stt = -70
+    x_end = -40
+    y_stt = -20
+    y_end = 10
+    
+    rect = plt.Rectangle(
+        (x_stt, y_stt), 
+        x_end - x_stt, 
+        y_end - y_stt,
+        edgecolor = 'k', 
+        facecolor = 'none', 
+        linewidth = 3
+    )
+    
+    axes.add_patch(rect)
 
 def plot_seasonal_occurrence(
         ax, 
@@ -132,8 +152,7 @@ def plot_seasonal_occurrence(
             f'({l}) {key}', 
             fontsize = 30
             )
-            
-        
+
         if i == 3:
             pass
         else:
@@ -155,7 +174,7 @@ def plot_seasonal_Ep_contours():
           dpi = 300, 
           ncols = 3, 
           nrows = 2, 
-          figsize = (13, 12),
+          figsize = (13, 10),
           subplot_kw = 
           {'projection': ccrs.PlateCarree()}
           )
@@ -164,10 +183,12 @@ def plot_seasonal_Ep_contours():
     
     ds = b.load('GOES/data/ep_all')
     
+    ds = ds.between_time('18:00', '05:00')
+    
     ds = gs.filter_space(
             ds, 
             x0 = -90, 
-            x1 = -35, 
+            x1 = -30, 
             y0 = -40, 
             y1 = 25
             )
@@ -179,16 +200,18 @@ def plot_seasonal_Ep_contours():
             fig,
             label = 'Ep (J/Kg)',
             fontsize = 35,
-            vmin = 3, 
-            vmax = 18, 
-            step = 2,
+            vmin = 9, 
+            vmax = 14, 
+            step = 0.5,
             orientation = "vertical", 
             anchor = (.94, 0.15, 0.03, 0.69)
             )
-
-    name  = 'Seasonal averages 2013 to 2022'
     
-    fig.suptitle(name, y = 1.1)
+    name  = 'Seasonal Ep averages 2013 to 2022'
+    
+    fig.suptitle(name, y = 0.95)
+    
+    return fig
 
 
-plot_seasonal_Ep_contours()
+# fig = plot_seasonal_Ep_contours()

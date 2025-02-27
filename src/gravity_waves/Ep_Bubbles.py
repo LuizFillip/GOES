@@ -34,7 +34,8 @@ def plot_scatter_quadratic(ds):
         ss_tot = np.sum((y - np.mean(y)) ** 2)  
         return 1 - (ss_res / ss_tot)
     
-    y, x = ds['wave'].values, ds['epb'].values
+    y = ds.iloc[:, 0].values
+    x = ds.iloc[:, 1].values
 
     coeffs = np.polyfit(x, y, 2)
     
@@ -57,8 +58,8 @@ def plot_scatter_quadratic(ds):
     ax.set(
         ylabel = 'Ep (J/k)', 
         xlabel = 'Midnight EPBs', 
-        xlim = [-1, 15], 
-        ylim = [8, 15]
+        # xlim = [-1, 15], 
+        # ylim = [8, 15]
         )
     
 
@@ -81,20 +82,23 @@ def get_averages_from_data(df2, df1):
     
     return pd.DataFrame(avg_results).T
 
-nums = {-70: 3, -60: 2, -50: 1}
+nums = {'All': 'Overall', -70: 'Sector 3', 
+        -60: 'Sector 2', -50: 'Sector 1'}
 
 def plot_linear_scatter(ax, ds, marker):
     
     n = ds.columns[0] 
-    label = f'({nums[n]}) {n}'
+    
+    # label = f'{nums[n]}'
     y = ds.iloc[:, 0].values
     x = ds.iloc[:, 1].values
     
+    print(x, y)
     ax.scatter(
         x, y, 
         marker = marker, 
         s = 150, 
-        label = label
+        # label = label
         )
     
     fit = b.linear_fit(x, y)
@@ -104,7 +108,7 @@ def plot_linear_scatter(ax, ds, marker):
         x, 
         fit.y_pred,
         lw = 2, 
-        label = label
+        # label = label
         )
 
     return line.get_color(), fit.r2_score
@@ -148,13 +152,17 @@ def plot_seasonal_evolution(eb, wv):
     ax1 = ax.twinx()
     
     ax1.plot(
-        wv.index, wv['mean_90_110'], 
-        lw = 2, color = 'red')
+        wv.index, 
+        wv['mean_90_110'], 
+        lw = 2, 
+        color = 'red'
+        )
 
 def epbs(time = 'year', total = True):
+    
     p = pb.BubblesPipe(
         'events_5', 
-                       drop_lim = 0.2)
+        drop_lim = 0.2)
     
     ds = p.sel_type('midnight')
     
@@ -184,7 +192,7 @@ def Ep_by_sectors(
     if total:
         df = select_sectors(
             df, 
-            lat_min = -10, 
+            lat_min = -20, 
             lat_max = 10, 
             lon_min = -70, 
             lon_max = -40
@@ -222,10 +230,12 @@ def Ep_by_sectors(
 def plot_all_sectors(ax, time, marker = 'x'):
     
     ds = Ep_by_sectors(
-        time = time, total = True)
+        time = time, 
+        total = True)
     
     ds1 = epbs(
-        time = time, total = True)
+        time = time, 
+        total = True)
     
     data = [ds, ds1]
      
@@ -237,7 +247,7 @@ def plot_all_sectors(ax, time, marker = 'x'):
         )
     
     ax.text(
-        0.55, 0.2 + 0.1, 
+        0.6, 0.3 + 0.1, 
         f'$R^2$ = {r2}', 
         color = c, 
         transform = ax.transAxes
@@ -256,7 +266,7 @@ def plot_sectors_div(ax, time):
         total = False
         )
     
-    sectors =  np.arange(-70, -40, 10)
+    sectors =  np.arange(-70, -40, 10)[::-1]
     markers = ['^', 'o', 's']
     for i, col in enumerate(sectors):
         
@@ -271,7 +281,7 @@ def plot_sectors_div(ax, time):
             )
         
         ax.text(
-            0.55, 0.2 - (i/10), 
+            0.6, 0.3 - (i/10), 
             f'$R^2$ = {r2}', 
             color = c, 
             transform = ax.transAxes
@@ -283,7 +293,7 @@ def plot_time_column(
         time = 'month', 
         l = '(a)'
         ):
-    name =  f'{l} {time.title()}'
+    name =  f'{l}'
     
     ax.text(
         0.03, 0.9, name, 
@@ -294,40 +304,47 @@ def plot_time_column(
     plot_sectors_div(ax, time = time)
 
     return None 
-fig, ax = plt.subplots(
-    figsize = (16, 10), 
-    ncols = 2,
-    dpi = 300, 
-    sharex = True, 
-    sharey = True 
+
+def plot_correlation_ep_epbs():
+    
+    fig, ax = plt.subplots(
+        figsize = (14, 6), 
+        ncols = 2,
+        dpi = 300, 
+        sharex = True, 
+        sharey = True 
     )
 
-plt.subplots_adjust(wspace = 0.1)
-
-
-
-plot_time_column(
-        ax[0], 
-        time = 'month', 
-        l = '(a)'
+    plt.subplots_adjust(wspace = 0.1)
+    
+    plot_time_column(
+            ax[0], 
+            time = 'month', 
+            l = '(a) Seasonal'
+            )
+    
+    plot_time_column(
+            ax[1], 
+            time = 'year', 
+            l = '(b) Solar cycle'
+            )
+    
+    ax[0].set(
+        ylabel = 'Ep (J/kg)',
+        ylim = [9, 14], 
+        xlim = [-20, 220]
         )
-
-plot_time_column(
-        ax[1], 
-        time = 'year', 
-        l = '(b)'
+    
+    ax[0].legend(
+        ncol = 4,
+        # title = 'Sectors',
+        loc = 'upper center',
+        fontsize = 30,
+        columnspacing=0.2,
+        bbox_to_anchor = (1, 1.2) 
         )
+    
+    fig.text(0.4, 0.01, 'Midnight EPBs events')
+    
+# plot_correlation_ep_epbs()
 
-ax[0].set(
-    ylabel = 'Ep (J/kg)',
-    ylim = [9, 14], 
-    xlim = [0, 220]
-    )
-
-ax[0].legend(
-    ncol = 4,
-    title = 'Sectors',
-    loc = 'upper center',
-    fontsize = 30,
-    bbox_to_anchor = (1, 1.2) 
-    )

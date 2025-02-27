@@ -32,3 +32,10 @@ def latitudinal_data_ep(
         )
     
     return ds.loc[ds.index.year == year]
+
+
+# latitudinal_data_ep(
+#         year = 2014,
+#         lat_min = -10,
+#         lat_max = 0
+#         )
