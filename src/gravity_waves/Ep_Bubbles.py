@@ -3,6 +3,7 @@ import base as b
 import PlasmaBubbles as pb 
 import matplotlib.pyplot as plt 
 import numpy as np 
+import GOES as gs 
 
 path_ep = 'GOES/data/Ep/'
 
@@ -73,8 +74,10 @@ def get_averages_from_data(df2, df1):
         start_date = vls[i]
         end_date = vls[i + 1]
         
-        subset = df2.loc[(df2.index >= start_date) & 
-                          (df2.index <= end_date)]
+        subset = df2.loc[
+            (df2.index >= start_date) & 
+            (df2.index <= end_date)
+            ]
         
         if not subset.empty:
             avg_results[start_date] = subset.mean()
@@ -88,17 +91,17 @@ nums = {'All': 'Overall', -70: 'Sector 3',
 def plot_linear_scatter(ax, ds, marker):
     
     n = ds.columns[0] 
+   
+    label = f'{nums[n]}'
     
-    # label = f'{nums[n]}'
     y = ds.iloc[:, 0].values
     x = ds.iloc[:, 1].values
     
-    print(x, y)
     ax.scatter(
         x, y, 
         marker = marker, 
         s = 150, 
-        # label = label
+        label = label
         )
     
     fit = b.linear_fit(x, y)
@@ -119,24 +122,7 @@ class PotentialEnergy(object):
         
         return 
     
-def group_by_time(
-        df, 
-        stp = 'month', 
-        col = '90_110', 
-        name = 'wave'
-        ):
-    
-    col = f'mean_{col}'
-    
-    df['month'] = df.index.month 
-    df['year'] = df.index.year
-    
-    df = df.between_time(
-        '18:00', '05:00')
-    
-    df = df.groupby([stp])[col].mean()
 
-    return df.to_frame(name)
 
     
 
@@ -198,7 +184,7 @@ def Ep_by_sectors(
             lon_max = -40
             )
         
-        return group_by_time(
+        return gs.group_by_time(
                 df, 
                 stp = time, 
                 col = '90_110', 
@@ -210,11 +196,12 @@ def Ep_by_sectors(
     out = []
     for sector in np.arange(-80, -40, 10):
         
-        ds = pb.filter_region(
-            df, year, sector)
+        ds = df.loc[
+            (df['lon'] > sector) &
+                       (df['lon'] < sector + 10)] 
         
         out.append(
-            group_by_time(
+            gs.group_by_time(
                 ds, 
                 stp = time, 
                 name = sector
@@ -308,7 +295,7 @@ def plot_time_column(
 def plot_correlation_ep_epbs():
     
     fig, ax = plt.subplots(
-        figsize = (14, 6), 
+        figsize = (14, 8), 
         ncols = 2,
         dpi = 300, 
         sharex = True, 
@@ -346,5 +333,7 @@ def plot_correlation_ep_epbs():
     
     fig.text(0.4, 0.01, 'Midnight EPBs events')
     
-# plot_correlation_ep_epbs()
+    return fig
+    
+fig = plot_correlation_ep_epbs()
 

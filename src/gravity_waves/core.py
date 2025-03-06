@@ -34,8 +34,21 @@ def latitudinal_data_ep(
     return ds.loc[ds.index.year == year]
 
 
-# latitudinal_data_ep(
-#         year = 2014,
-#         lat_min = -10,
-#         lat_max = 0
-#         )
+def group_by_time(
+        df, 
+        stp = 'month', 
+        col = '90_110', 
+        name = 'wave'
+        ):
+    
+    col = f'mean_{col}'
+    
+    df['month'] = df.index.month 
+    df['year'] = df.index.year
+    
+    df = df.between_time(
+        '18:00', '05:00')
+    
+    df = df.groupby([stp])[col].mean()
+
+    return df.to_frame(name)
