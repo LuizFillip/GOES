@@ -1,12 +1,7 @@
-import base as b 
+ 
 import pandas as pd 
 import matplotlib.pyplot as plt 
 import GOES as gs 
-
-
-
-
-
 
 def run_in_latitudes(year):
     
@@ -18,8 +13,9 @@ def run_in_latitudes(year):
     for lat_min in latitudes:
         
         try:
+            ds = count_in_sector(df, lat_min)
             out.append( 
-                count_in_sector(df, lat_min).to_frame(lat_min)
+                ds.to_frame(lat_min)
                 )
         except:
             continue 
@@ -49,35 +45,14 @@ def plot_contour(ds):
     
     plt.colorbar(img)
     
-    ax.set(ylabel = 'Date', xlabel = 'Latitude (°)')
+    ax.set(ylabel = 'Date', 
+           xlabel = 'Latitude (°)')
     
     # df.to_csv('percent_latitudes_monthly')
     
-year = 2018
-df = gs.load_nucleos(year)
-
-#%%%%
-
-df = df.loc[~(df['area'] > 2000)]
-
-def count_in_sector(ds, sample = '1M'):
-    
-    ds = ds.resample(sample).size() 
-    
-    return (ds / ds.values.max()) * 100
-
-ds = gs.filter_space(
-        df, 
-        x0 = -80, 
-        x1 = -40, 
-        y0 = 0, 
-        y1 = 10
-        )
 
 
-def select_temp(df, temp = -50):
-    return df.loc[(df['temp'] > temp) & 
-                  (df['temp'] < temp + 10)]
+
 
 def filter_areas(
         df, 
@@ -105,14 +80,21 @@ def filter_areas(
     else:
         return a3
 
-print(ds['area'].plot(kind = 'hist'))
-
-# ds = select_temp(ds, temp = -70)
-
-
-#
-
-# count_in_sector(ds, sample = '15D').plot()
-
-
-ds.loc[ds['area'] > 1000]
+def test_areas():
+    year = 2018
+    df = gs.load_nucleos(year)
+    
+    
+    df = df.loc[~(df['area'] > 2000)]
+    ds = gs.filter_space(
+            df, 
+            x0 = -80, 
+            x1 = -40, 
+            y0 = 0, 
+            y1 = 10
+            )
+    
+    print(ds['area'].plot(kind = 'hist'))
+    
+   
+    ds.loc[ds['area'] > 1000]

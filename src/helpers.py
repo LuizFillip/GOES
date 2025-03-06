@@ -76,7 +76,9 @@ def potential_energy(year = 2019):
         )
     
     df = df.rename(
-        columns = {'Lon': 'lon', 
-                    'Lat': 'lat'}
+        columns = {
+            'Lon': 'lon', 
+            'Lat': 'lat'
+            }
         )
     return df
