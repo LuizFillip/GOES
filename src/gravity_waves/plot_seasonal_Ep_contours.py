@@ -5,6 +5,7 @@ import base as b
 import numpy as np 
 import GOES as gs
 import cartopy.crs as ccrs
+pd.options.mode.chained_assignment = None
 
 
 def size_by_grid(
@@ -33,9 +34,9 @@ def size_by_grid(
         labels = lat_bins[:-1]
         )
     
-    df['lon_bin'] = df['lon_bin'].astype(
+    df.loc[:, 'lon_bin'] = df['lon_bin'].astype(
         float).round(rounding)
-    df['lat_bin'] = df['lat_bin'].astype(
+    df.loc[:, 'lat_bin'] = df['lat_bin'].astype(
         float).round(rounding)
 
       
@@ -130,6 +131,19 @@ def plot_seasonal_occurrence(
         'Sep - Oct': [9, 10], 
         'Nov - Dec': [11, 12]
     }
+    '''
+    Verão: Dezembro, Janeiro e Fevereiro
+    Outono: Março, Abril e Maio
+    Inverno: Junho, Julho e Agosto
+    Primavera: Setembro, Outubro e Novembro
+    '''
+    seasons = {
+
+        'December\nsolstice': [12, 1, 2], 
+        'March\nequinox': [3, 4, 5], 
+        'June\nsolstice': [6, 7, 8], 
+        'September\nequinox': [9, 10, 11], 
+    }
     
     axes = ax.flat
 
@@ -153,7 +167,7 @@ def plot_seasonal_occurrence(
             fontsize = 30
             )
 
-        if i == 3:
+        if i == 0:
             pass
         else:
             axes[i].set(
@@ -172,9 +186,9 @@ def plot_seasonal_Ep_contours():
         
     fig, axs = plt.subplots(
           dpi = 300, 
-          ncols = 3, 
-          nrows = 2, 
-          figsize = (13, 10),
+          ncols = 4, 
+          nrows = 1, 
+          figsize = (14, 12),
           subplot_kw = 
           {'projection': ccrs.PlateCarree()}
           )
@@ -202,16 +216,16 @@ def plot_seasonal_Ep_contours():
             fontsize = 35,
             vmin = 9, 
             vmax = 14, 
-            step = 0.5,
+            step = 1,
             orientation = "vertical", 
-            anchor = (.94, 0.15, 0.03, 0.69)
+            anchor = (.93, 0.39, 0.022, 0.22)
             )
     
-    name  = 'Seasonal Ep averages 2013 to 2022'
+    name  = 'Seasonal gravity waves Ep averages 2013 to 2022'
     
-    fig.suptitle(name, y = 0.95)
+    fig.suptitle(name, y = 0.73)
     
     return fig
 
 
-# fig = plot_seasonal_Ep_contours()
+fig = plot_seasonal_Ep_contours()

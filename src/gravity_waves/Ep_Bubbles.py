@@ -114,7 +114,7 @@ def plot_linear_scatter(ax, ds, marker):
         # label = label
         )
 
-    return line.get_color(), fit.r2_score
+    return fit.r2_score
 
 class PotentialEnergy(object):
     
@@ -157,8 +157,7 @@ def epbs(time = 'year', total = True):
     cols = [-70, -60, -50]
     
     if total:
-        return df[cols].sum(
-        axis = 1).to_frame('All')
+        return df[cols].sum(axis = 1).to_frame('All')
     else:
         return df 
 
@@ -196,9 +195,12 @@ def Ep_by_sectors(
     out = []
     for sector in np.arange(-80, -40, 10):
         
-        ds = df.loc[
-            (df['lon'] > sector) &
-                       (df['lon'] < sector + 10)] 
+        # ds = df.loc[
+        #     (df['lon'] > sector) &
+        #     (df['lon'] < sector + 10)] 
+        
+        ds = pb.filter_region(
+            df, year, sector)
         
         out.append(
             gs.group_by_time(
@@ -229,15 +231,22 @@ def plot_all_sectors(ax, time, marker = 'x'):
     jj = pd.concat(data, axis = 1) 
     
     jj = jj.replace(np.nan, 0)
-    c, r2 = plot_linear_scatter(
+    r2 = plot_linear_scatter(
         ax, jj, marker
         )
     
     ax.text(
-        0.6, 0.3 + 0.1, 
+        0.55, 0.9, 
         f'$R^2$ = {r2}', 
-        color = c, 
+        color = 'k', 
         transform = ax.transAxes
+        )
+    
+    ax.set(
+        ylabel = 'Ep (J/kg)',
+        xlabel = 'Midnight EPBs',
+        ylim = [11, 13], 
+        xlim = [-20, 220]
         )
     
     return None 
@@ -268,7 +277,7 @@ def plot_sectors_div(ax, time):
             )
         
         ax.text(
-            0.6, 0.3 - (i/10), 
+            0.55, 0.25 - (i/10), 
             f'$R^2$ = {r2}', 
             color = c, 
             transform = ax.transAxes
@@ -288,7 +297,7 @@ def plot_time_column(
         )
     plot_all_sectors(ax, time = time)
     
-    plot_sectors_div(ax, time = time)
+    # plot_sectors_div(ax, time = time)
 
     return None 
 
@@ -302,18 +311,18 @@ def plot_correlation_ep_epbs():
         sharey = True 
     )
 
-    plt.subplots_adjust(wspace = 0.1)
+    plt.subplots_adjust(wspace = 0)
+    
+    # plot_time_column(
+    #         ax[0], 
+    #         time = 'month', 
+    #         l = '(a) Seasonal'
+    #         )
     
     plot_time_column(
             ax[0], 
-            time = 'month', 
-            l = '(a) Seasonal'
-            )
-    
-    plot_time_column(
-            ax[1], 
             time = 'year', 
-            l = '(b) Solar cycle'
+            l = '(a) Solar cycle'
             )
     
     ax[0].set(
@@ -335,5 +344,56 @@ def plot_correlation_ep_epbs():
     
     return fig
     
-fig = plot_correlation_ep_epbs()
+# fig = plot_correlation_ep_epbs()
+import core as c 
 
+fig, ax = plt.subplots(
+    figsize = (12, 6), 
+    ncols = 2,
+    dpi = 300, 
+    sharex = True, 
+    # sharey = True 
+)
+
+def plot_epb_and_solar_flux(ax):
+    
+    ds = epbs(time = 'year', total = True)
+    
+    df = c.geo_index(eyear = 2022)
+    
+    df = df.resample('1Y').mean()
+    
+    df.index = df.index.year
+    
+    jj = pd.concat([ds, df['f107a']], axis = 1)
+    
+    
+    r2 = plot_linear_scatter(
+        ax, jj, 's'
+        )
+    
+    ax.text(
+        0.55, 0.9, 
+        f'$R^2$ = {r2}', 
+        color = 'k', 
+        transform = ax.transAxes
+        )
+    
+    ax.set(
+        ylabel = 'F10.7 SFU', 
+        xlabel = 'Midnight EPBs'
+        )
+    
+plt.subplots_adjust(wspace = 0.3)
+plot_epb_and_solar_flux(ax[1])
+plot_all_sectors(ax[0], time = 'year')
+
+ax[0].text(
+    0.03, 0.9, '(a)', 
+    transform = ax[0].transAxes
+    )
+
+ax[1].text(
+    0.03, 0.9, '(a)', 
+    transform = ax[1].transAxes
+    )
