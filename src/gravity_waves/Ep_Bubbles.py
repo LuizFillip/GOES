@@ -394,6 +394,6 @@ ax[0].text(
     )
 
 ax[1].text(
-    0.03, 0.9, '(a)', 
+    0.03, 0.9, '(b)', 
     transform = ax[1].transAxes
     )
