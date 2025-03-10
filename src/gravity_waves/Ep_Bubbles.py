@@ -4,6 +4,7 @@ import PlasmaBubbles as pb
 import matplotlib.pyplot as plt 
 import numpy as np 
 import GOES as gs 
+import core as c 
 
 path_ep = 'GOES/data/Ep/'
 
@@ -345,15 +346,9 @@ def plot_correlation_ep_epbs():
     return fig
     
 # fig = plot_correlation_ep_epbs()
-import core as c 
 
-fig, ax = plt.subplots(
-    figsize = (12, 6), 
-    ncols = 2,
-    dpi = 300, 
-    sharex = True, 
-    # sharey = True 
-)
+
+
 
 def plot_epb_and_solar_flux(ax):
     
@@ -384,16 +379,25 @@ def plot_epb_and_solar_flux(ax):
         xlabel = 'Midnight EPBs'
         )
     
-plt.subplots_adjust(wspace = 0.3)
-plot_epb_and_solar_flux(ax[1])
-plot_all_sectors(ax[0], time = 'year')
-
-ax[0].text(
-    0.03, 0.9, '(a)', 
-    transform = ax[0].transAxes
+def plot_ep_and_f107_corr():
+    
+    fig, ax = plt.subplots(
+        figsize = (12, 6), 
+        ncols = 2,
+        dpi = 300, 
+        sharex = True, 
+        # sharey = True 
     )
-
-ax[1].text(
-    0.03, 0.9, '(b)', 
-    transform = ax[1].transAxes
-    )
+    plt.subplots_adjust(wspace = 0.3)
+    plot_epb_and_solar_flux(ax[1])
+    plot_all_sectors(ax[0], time = 'year')
+    
+    ax[0].text(
+        0.03, 0.9, '(a)', 
+        transform = ax[0].transAxes
+        )
+    
+    ax[1].text(
+        0.03, 0.9, '(b)', 
+        transform = ax[1].transAxes
+        )
