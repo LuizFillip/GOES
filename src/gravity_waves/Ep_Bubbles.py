@@ -382,12 +382,13 @@ def plot_epb_and_solar_flux(ax):
 def plot_ep_and_f107_corr():
     
     fig, ax = plt.subplots(
-        figsize = (12, 6), 
+        figsize = (15, 8), 
         ncols = 2,
         dpi = 300, 
         sharex = True, 
         # sharey = True 
     )
+    
     plt.subplots_adjust(wspace = 0.3)
     plot_epb_and_solar_flux(ax[1])
     plot_all_sectors(ax[0], time = 'year')
@@ -401,3 +402,12 @@ def plot_ep_and_f107_corr():
         0.03, 0.9, '(b)', 
         transform = ax[1].transAxes
         )
+    
+    save_in = 'G:\\My Drive\\Papers\\Paper 2\\Midnight EPBs\\Eps\\img\\'
+    
+    FigureName = 'correlation_F107_Ep'
+    fig.savefig(save_in + FigureName, dpi = 300
+                )
+    
+    
+plot_ep_and_f107_corr()

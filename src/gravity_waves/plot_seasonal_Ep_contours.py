@@ -229,3 +229,8 @@ def plot_seasonal_Ep_contours():
 
 
 fig = plot_seasonal_Ep_contours()
+
+save_in = 'G:\\My Drive\\Papers\\Paper 2\\Midnight EPBs\\Eps\\img\\'
+
+# fig.savefig(save_in + 'seasonal_contours', dpi = 300
+#             )

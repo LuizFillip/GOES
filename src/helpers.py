@@ -28,21 +28,15 @@ def load(infile, date_index = False):
 
 def filter_space(
         df, 
-        x0 = -80, 
-        x1 = -30, 
-        y0 = 10, 
-        y1 = 0
+        lon_min = -50, 
+        lon_max = -40, 
+        lat_min = -10, 
+        lat_max = 10
         ):
-    try:
-        return  df.loc[
-            ((df['lon'] > x0) & (df['lon'] < x1)) &
-            ((df['lat'] > y0) & (df['lat'] < y1))
-        ]
-    except:
-        return df.loc[
-            ((df['x0'] > x0) & (df['x1'] < x1)) &
-            ((df['y0'] > y0) & (df['y1'] < y1))
-        ]
+    return  df.loc[
+        ((df['lon'] > lon_min) & (df['lon'] < lon_max)) &
+        ((df['lat'] > lat_min) & (df['lat'] < lat_max))
+    ]
 
 
 def load_nucleos(year = 2013):

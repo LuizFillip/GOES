@@ -45,7 +45,8 @@ def plot_contour(ds):
     
     plt.colorbar(img)
     
-    ax.set(ylabel = 'Date', 
+    ax.set(
+        ylabel = 'Date', 
            xlabel = 'Latitude (°)')
     
     # df.to_csv('percent_latitudes_monthly')
@@ -80,21 +81,37 @@ def filter_areas(
     else:
         return a3
 
-def test_areas():
-    year = 2018
+# def test_areas():
+    
+    
+year = 2019
+
+out = []
+for year in range(2013, 2022):
+    
     df = gs.load_nucleos(year)
     
     
     df = df.loc[~(df['area'] > 2000)]
+    
     ds = gs.filter_space(
             df, 
-            x0 = -80, 
-            x1 = -40, 
-            y0 = 0, 
-            y1 = 10
+            lon_min = -50, 
+            lon_max = -40, 
+            lat_min = -10, 
+            lat_max = 10
             )
     
-    print(ds['area'].plot(kind = 'hist'))
+    sel = ds.resample('1D').count()['lat']
+    out.append(sel / sel.max())
     
-   
-    ds.loc[ds['area'] > 1000]
+df = pd.concat(out)
+
+#%%%
+
+# df.loc[df.index.year >= 2018].plot() 
+# df
+
+df = gs.load_nucleos(year)
+
+df 

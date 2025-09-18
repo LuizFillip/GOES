@@ -14,7 +14,7 @@ def goes_cmap(path = 'GOES/src/plots/colorbar.cpt'):
 
 class plotTopCloud(object):
     
-    b.config_labels()
+    b.sci_format()
 
     def __init__(
             self, 

@@ -49,9 +49,9 @@ def find_nucleos(
         area = abs((y_end - y_stt) * (x_end - x_stt))
         
         if area > area_threshold:
-            out.append([x_stt, x_end, 
-                        y_stt, y_end, 
-                        area, avg_temp])
+            out.append(
+                [x_stt, x_end, y_stt, y_end, area, avg_temp]
+                )
             
     columns = ['lon_min', 'lon_max', 
                'lat_min', 'lat_max', 

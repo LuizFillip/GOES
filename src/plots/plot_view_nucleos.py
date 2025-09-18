@@ -53,9 +53,10 @@ def test_plot(fname, temp = -30):
 import datetime as dt 
 
 def main():
-    dn = dt.datetime(2018,1,7,19,45)
+    dn = dt.datetime(2018, 1, 7, 19, 45)
     folder = dn.strftime('%Y\\%m\\S10635346_%Y%m%d%H%M.nc')
     fname = f'E:\\database\\goes\\{folder}'
     
-    fig = test_plot(fname, temp = -40)
+    fig = test_plot(fname, temp = -60)
 
+main()
