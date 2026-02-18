@@ -1,159 +1,109 @@
+from __future__ import annotations
 from scipy.ndimage import label, find_objects
-import numpy as np 
-import pandas as pd 
-import GOES as gs 
-import os 
-from tqdm import tqdm 
-import datetime as dt 
-import base as b 
+import numpy as np
+import pandas as pd
 
 
 def find_nucleos(
-        data, 
-        lons, 
-        lats,
-        dn,
-        area_threshold = 1,
-        temp_threshold = -60,
-        by_indexes = True
-        ):
+    data: np.ndarray,
+    lons: np.ndarray,
+    lats: np.ndarray,
+    dn=None,
+    area_threshold: float = 1.0,
+    temp_threshold: float = -60.0,
+    return_coords: bool = True,
+    connectivity: int = 1,
+) -> pd.DataFrame:
+    """
+    Detecta regiões (componentes conectados) onde data <= temp_threshold.
     
-    data = np.where(data > temp_threshold, np.nan, data)
-    
-    lab_array, num_features = label(~np.isnan(data))
-        
-    ymax, xmax = data.shape
-    
+    Parâmetros
+    ----------
+    data : (ny, nx) array
+        Campo 2D (ex.: temperatura). Eixo 0 = lat, eixo 1 = lon.
+    lons : (nx,) array
+        Longitudes correspondentes às colunas de data.
+    lats : (ny,) array
+        Latitudes correspondentes às linhas de data.
+    dn : qualquer, opcional
+        Timestamp para indexar o DataFrame.
+    area_threshold : float
+        Limite mínimo de área (em graus^2 se return_coords=True).
+    temp_threshold : float
+        Threshold: valores > threshold viram NaN; regiões são <= threshold.
+    return_coords : bool
+        True -> retorna lon/lat; False -> retorna índices i/j.
+    connectivity : int
+        1 = 4-conectado, 2 = 8-conectado.
+    """
+
+    data = np.asarray(data)
+    lons = np.asarray(lons, dtype=float)
+    lats = np.asarray(lats, dtype=float) #[::-1]
+
+    if data.ndim != 2:
+        raise ValueError("data precisa ser 2D (ny, nx)")
+    ny, nx = data.shape
+    if lons.shape[0] != nx:
+        raise ValueError(f"len(lons)={len(lons)} não bate com nx={nx}")
+    if lats.shape[0] != ny:
+        raise ValueError(f"len(lats)={len(lats)} não bate com ny={ny}")
+
+ 
+    # Máscara das regiões frias (True onde é "núcleo")
+    cold = data <= temp_threshold
+    cold &= np.isfinite(data)
+
+    # Estrutura de conectividade
+    if connectivity == 1:
+        structure = np.array(
+            [[0,1,0],
+            [1,1,1],
+            [0,1,0]], dtype=bool)
+    elif connectivity == 2:
+        structure = np.ones((3,3), dtype=bool)
+    else:
+        raise ValueError("connectivity deve ser 1 (4-conect) ou 2 (8-conect)")
+
+    lab, nfeat = label(cold, structure=structure)
+    objs = find_objects(lab)
+
     out = []
-    for i, region in enumerate(find_objects(lab_array)):
-       
-        x_stt, x_end = region[1].start, region[1].stop
-        y_stt, y_end = region[0].start, region[0].stop
-        
-        dat  = data[x_stt: x_end, y_stt: y_end]
-        
-        if dat.size > 0 and not np.all(np.isnan(dat)):
-            avg_temp = np.nanmean(dat)
-        else:
-            avg_temp = np.nan 
-        
-        if by_indexes:
-            if (x_end == xmax):
-                x_end = -1
-            if (y_end == ymax):
-                y_end = -1
-            
-            x_stt, x_end = lons[x_stt], lons[x_end]
-            y_stt, y_end = lats[y_stt], lats[y_end] 
-        
-        area = abs((y_end - y_stt) * (x_end - x_stt))
-        
-        if area > area_threshold:
-            out.append(
-                [x_stt, x_end, y_stt, y_end, area, avg_temp]
-                )
-            
-    columns = ['lon_min', 'lon_max', 
-               'lat_min', 'lat_max', 
-               'area', 'temp']
-    
-    ds = pd.DataFrame(out, columns = columns)
-    
-    ds['time'] = dn
-    
-    return ds.set_index('time').dropna()
-        
-
-def nucleos_catalog(fname):
-    
-    ds = gs.CloudyTemperature(fname)
-    data = ds.data
-    lons = ds.lon 
-    lats = ds.lat
-    
-    ds = find_nucleos(
-            data, 
-            lons, 
-            lats[::-1], 
-            ds.dn,
-            area_threshold = 1,
-            temp_threshold = -30,
-            by_indexes = True
-            )
-
-    return ds 
-  
-
-def walk_goes(dn, B = 'E'):
-    
-    mn = dn.strftime("%m")
-    yr = dn.strftime("%Y")
-    
-    path =  f'{B}:\\database\\goes\\{yr}\\{mn}\\'
-    
-    return [os.path.join(path, f) for f in os.listdir(path)]
-
-
-def run_nucleos(dn, B = 'E'):
-    root = 'GOES/data/'
-          
-    path_year = f'{root}{dn.year}/'
-    
-    b.make_dir(path_year)
-    
-    io = 'Detection'
-    
-    out = []
-    
-    for file in tqdm(walk_goes(dn, B), io):
-        try:
-            out.append(nucleos_catalog(file))
-        except:
+    for sl in objs:
+        if sl is None:
             continue
-        
-    df = pd.concat(out)
-    
-    df.to_csv(f'{path_year}{dn.month}') 
-    
-    return df 
 
-def start_process(year):
-    
-    root = 'GOES/data/'
-          
-    path_year = f'{root}{year}/'
-    
-    b.make_dir(path_year)
-    
-    dates = pd.date_range(
-        dt.datetime(year, 10, 1),
-        dt.datetime(year, 12, 31), 
-        freq = '1M'
-        )
-    
-    for dn in dates:
-        df = run_nucleos(dn, B = 'D')
-        
-        df.to_csv(f'{path_year}{dn.month}') 
-    
-    return None 
+        y_sl, x_sl = sl  # eixo 0 = y(lat), eixo 1 = x(lon)
+        y0, y1 = y_sl.start, y_sl.stop   # [y0, y1)
+        x0, x1 = x_sl.start, x_sl.stop   # [x0, x1)
 
+        if return_coords:
+            lon0, lon1 = lons[x0], lons[x1 - 1]
+            lat0, lat1 = lats[y0], lats[y1 - 1]
 
-# start_process(2022)
-def test_run():
-    fname = 'E:\\database\\goes\\2019\\04\\S10635346_201904010030.nc'
-    dn = gs.fname2date(fname)
-    ds = gs.CloudyTemperature(fname)
-    dat, lon, lat = ds.data, ds.lon, ds.lat
-    lat = lat[::-1]
-    
-    df = find_nucleos(
-            dat, 
-            lon, 
-            lat,
-            dn,
-            area_threshold = 1,
-            temp_threshold = -30,
-            by_indexes = True
-            )
-    
+            lon_min, lon_max = ((lon0, lon1) if lon0 <= lon1 else
+                                (lon1, lon0))
+            lat_min, lat_max = ((lat0, lat1) if lat0 <= lat1 else
+                                (lat1, lat0))
+
+            area = (lon_max - lon_min) * (lat_max - lat_min)
+            if area >= area_threshold:
+                out.append([lon_min, lon_max, lat_min, lat_max, area])
+        else:
+            # área em "pixels" se estiver em índices
+            area = (x1 - x0) * (y1 - y0)
+            if area >= area_threshold:
+                out.append([x0, x1, y0, y1, area])
+
+    if return_coords:
+        columns = ["lon_min", "lon_max", "lat_min", "lat_max", "area"]
+    else:
+        columns = ["x_min", "x_max", "y_min", "y_max", "area_px" ]
+
+    df = pd.DataFrame(out, columns=columns)
+
+    if dn is not None:
+        df["time"] = dn
+        df = df.set_index("time")
+
+    return df.dropna()
