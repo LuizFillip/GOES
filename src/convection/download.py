@@ -19,10 +19,7 @@ def goesURL(str_yr, str_mn):
         
     return f'{base}{str_yr}/{str_mn}/'
 
-def fn2dn(fn):
-    fmt = '%Y%m%d%H%M.nc'
-    date_string = fn.split('_')[1]
-    return dt.datetime.strptime(date_string, fmt)
+
 def dowloadGOES(dn,  B = 'E'):
     
     str_mn = dn.strftime("%m")

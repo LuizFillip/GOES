@@ -1,20 +1,43 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Feb 18 14:09:09 2026
+import datetime as dt 
+import GOES  as gs
+import pandas as pd 
+import base as b 
+from tqdm import tqdm 
 
-@author: Luiz
-"""
+ref = dt.datetime(2023, 1, 1)
+ 
 
-dn = dt.datetime(2020, 1, 1, 1, 1)
-folder = dn.strftime('%Y\\%m\\S10635346_%Y%m%d%H%M.nc')
-fname = f'D:\\database\\goes\\{folder}'
+# def run_nucleos(ref, B = 'E', threshold = -40):
+root = 'GOES/data/nucleos3/'
+      
+path_year = f'{root}{ref.year}/'
 
-fname = "D:\\database\\goes\\2020\\01\\S10635346_202001010000.nc"
+b.make_dir(path_year)
 
-ds = gs.CloudyTemperature(fname)
+desc = f'Detection - {ref.date()}'
 
-dat, lon, lat = ds.data, ds.lon, ds.lat
+out = []
 
-df_temp  = pd.DataFrame(dat, columns = lon, index = lat)
+files = gs.walk_goes(ref, B= 'D')
 
-df_temp.to_csv('GOES/data/test')
+for fn in tqdm(files, desc):
+    
+    lon, lat, temp = gs.read_dataset(fn)
+    
+    result = gs.compute_stats(
+        lon, lat, temp, 
+        gs.fn2dn(fn),
+        threshold = -40
+        )
+    
+    out.append(result)
+   
+    
+df = pd.concat(out)
+
+df.to_csv(f'{path_year}{ref.month}') 
+
+# # return df 
+ 
+    
+# run_nucleos(ref, B = 'D', threshold = -40)

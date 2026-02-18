@@ -80,7 +80,7 @@ class CloudyTemperature(object):
     
     @property
     def to_pivot(self):
-        ds = self.to_dataset()
+        ds = self.to_dataset
         return pd.pivot_table(
             ds, 
             columns = 'lon', 

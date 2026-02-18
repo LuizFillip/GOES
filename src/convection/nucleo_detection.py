@@ -5,9 +5,9 @@ import pandas as pd
 
 
 def find_nucleos(
-    data: np.ndarray,
     lons: np.ndarray,
     lats: np.ndarray,
+    data: np.ndarray,
     dn=None,
     area_threshold: float = 1.0,
     temp_threshold: float = -60.0,
