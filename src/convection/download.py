@@ -1,64 +1,82 @@
-import base as b 
-import os 
-import Webscrape as wb 
-from tqdm import tqdm 
-import datetime as dt 
+from __future__ import annotations
+from pathlib import Path
+from tqdm import tqdm
+import base as b
+import Webscrape as wb
+import GOES as gs
 
-def goesURL(str_yr, str_mn):
-    
-    year = int(str_yr)
-    
+
+def goes_url(year: int, month: int) -> str:
     base = "http://ftp.cptec.inpe.br/goes/"
-    # https://ftp.cptec.inpe.br/goes/goes12/retangular_4km/ch4_bin/2004/
-    if (year >= 2003) and (year < 2013):
-        base += 'goes12/retangular_4km/ch4_bin/'
-    if (year >= 2013) and (year < 2018):
-        base += 'goes13/retangular_4km/ch4_bin/'
-    if (year >= 2018):
-        base += 'goes16/retangular/ch13/'
-        
-    return f'{base}{str_yr}/{str_mn}/'
+
+    if 2003 <= year < 2013:
+        base += "goes12/retangular_4km/ch4_bin/"
+    elif 2013 <= year < 2018:
+        base += "goes13/retangular_4km/ch4_bin/"
+    else:  # year >= 2018
+        base += "goes16/retangular/ch13/"
+
+    return f"{base}{year:04d}/{month:02d}/"
 
 
-def dowloadGOES(dn,  B = 'E'):
-    
-    str_mn = dn.strftime("%m")
-    str_yr = dn.strftime("%Y")
-    
-    root = f'{B}:\\database\\goes\\'
-    b.make_dir(root)
-    path_yr = os.path.join(root, str_yr)
-    b.make_dir(path_yr)
-    path_mn = os.path.join(path_yr, str_mn)
-    b.make_dir(path_mn)
-    url = goesURL(str_yr, str_mn)
-    
-    desc = f'Download - {dn.date()}'
-  
-    files = os.listdir(path_mn)
-    
-    for href in tqdm(wb.request(url), desc):
-   
-        if href.endswith('gz') or href.endswith('nc'):
-            
-            if href not in files:
-                # out.append(href)
-                
-                if fn2dn(href).minute == 0:
-                    # print(fn2dn(href))
-            
-                    wb.download(
-                        url, 
-                        href, 
-                        path_mn
-                        )
-            else:
-                pass
-            
-   
-    return None 
+def ensure_goes_dir(drive: str, year: int, month: int) -> Path:
+    root = Path(f"{drive}:\\database\\goes")
+    path = root / f"{year:04d}" / f"{month:02d}"
+    b.make_dir(str(path))
+    return path
 
-for month in list(range(3, 13)):
 
-    dn = dt.datetime(2023, month, 1)
-    dowloadGOES(dn, B = 'D')
+def _is_candidate_file(name: str) -> bool:
+    # cptec costuma ter .gz e/ou .nc
+    return name.endswith(".gz") or name.endswith(".nc")
+
+
+def _minute_filter_ok(filename: str, only_minute_zero: bool) -> bool:
+    if not only_minute_zero:
+        return True
+    try:
+        return gs.fn2dn(filename).minute == 0
+    except Exception:
+        # se não conseguir parsear, ignora (não baixa)
+        return False
+
+
+def download_goes_month(
+    year: int,
+    month: int,
+    drive: str = "D",
+    only_minute_zero: bool = True,
+    skip_existing: bool = True,
+) -> list[str]:
+    """
+    Baixa arquivos GOES do mês (CPTEC FTP) para drive:\\database\\goes\\YYYY\\MM\\
+    Retorna lista dos arquivos baixados.
+    """
+    url = goes_url(year, month)
+    out_dir = ensure_goes_dir(drive, year, month)
+
+    hrefs = wb.request(url)  # deve retornar iterável de strings
+    downloaded: list[str] = []
+
+    desc = f"Download GOES {year:04d}-{month:02d}"
+    for href in tqdm(hrefs, desc=desc):
+        if not _is_candidate_file(href):
+            continue
+        if not _minute_filter_ok(href, only_minute_zero):
+            continue
+
+        out_path = out_dir / href
+        if skip_existing and out_path.exists():
+            continue
+
+        wb.download(url, href, str(out_dir))
+        downloaded.append(href)
+
+    return downloaded
+
+
+# --------- exemplo: março a dezembro de 2023 ---------
+
+for month in range(3, 13):
+    downloaded = download_goes_month(2023, month, drive="D", only_minute_zero=True)
+    print(f"{month:02d}/2023: {len(downloaded)} arquivos baixados")
