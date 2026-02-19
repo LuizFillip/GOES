@@ -21,7 +21,9 @@ def goes_url(year: int, month: int) -> str:
 
 def ensure_goes_dir(drive: str, year: int, month: int) -> Path:
     root = Path(f"{drive}:\\database\\goes")
-    path = root / f"{year:04d}" / f"{month:02d}"
+    path = root / f"{year:04d}" 
+    b.make_dir(str(path))
+    path = path / f"{month:02d}"
     b.make_dir(str(path))
     return path
 
@@ -47,7 +49,7 @@ def download_goes_month(
     drive: str = "D",
     only_minute_zero: bool = True,
     skip_existing: bool = True,
-) -> list[str]:
+    ) -> list[str]:
     """
     Baixa arquivos GOES do mês (CPTEC FTP) para drive:\\database\\goes\\YYYY\\MM\\
     Retorna lista dos arquivos baixados.
@@ -60,15 +62,17 @@ def download_goes_month(
 
     desc = f"Download GOES {year:04d}-{month:02d}"
     for href in tqdm(hrefs, desc=desc):
+        
         if not _is_candidate_file(href):
+             
             continue
         if not _minute_filter_ok(href, only_minute_zero):
             continue
-
+       
         out_path = out_dir / href
         if skip_existing and out_path.exists():
             continue
-
+        
         wb.download(url, href, str(out_dir))
         downloaded.append(href)
 
@@ -76,7 +80,13 @@ def download_goes_month(
 
 
 # --------- exemplo: março a dezembro de 2023 ---------
-
-for month in range(3, 13):
-    downloaded = download_goes_month(2023, month, drive="D", only_minute_zero=True)
+year = 2013
+for month in range(1, 13):
+ 
+    downloaded = download_goes_month(
+        year, 
+        month, 
+        drive = "F", only_minute_zero=True)
     print(f"{month:02d}/2023: {len(downloaded)} arquivos baixados")
+
+ 
