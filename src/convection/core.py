@@ -18,8 +18,10 @@ def read_gzbin(f_name):
         image_size = [1714, 1870]
         # image_size = [1200, 1335]
         data_bin = dados_binarios.reshape(image_size)
-    
-        return data_bin / 100 - 273.13
+        shape = data_bin.shape
+        lon = np.arange(shape[1]) * 0.04 - 100
+        lat = np.arange(shape[0]) * 0.04 - 50
+        return lon, lat, data_bin / 100 - 273.13
 
 def read_dataset(fname):
     
@@ -109,4 +111,4 @@ def load_files(ref_day):
    
     return [os.path.join(path, f) for f in files]
 
-
+ 
