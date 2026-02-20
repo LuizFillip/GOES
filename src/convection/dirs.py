@@ -1,6 +1,16 @@
 import os 
 import datetime as dt
 
+def load_files(ref_day):
+    path = 'E:\\database\\goes\\'
+
+    files = os.listdir(path)
+
+    if ref_day is not None:
+        files  = [f for f in files if fname2date(f) < ref_day]
+   
+    return [os.path.join(path, f) for f in files]
+
 def walk_goes(dn, B = 'E'):
     
     mn = dn.strftime("%m")
@@ -11,6 +21,6 @@ def walk_goes(dn, B = 'E'):
     return [os.path.join(path, f) for f in os.listdir(path)]
 
 def fn2dn(fn):
-    fmt = '%Y%m%d%H%M.nc'
-    date_string = fn.split('_')[1]
+    fmt = '%Y%m%d%H%M'
+    date_string = fn.split('_')[1][:-3]
     return dt.datetime.strptime(date_string, fmt)
