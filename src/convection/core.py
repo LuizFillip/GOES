@@ -17,10 +17,23 @@ def read_gzbin(f_name):
 
         image_size = [1714, 1870]
         # image_size = [1200, 1335]
-        data_bin = dados_binarios.reshape(image_size)
+        data_bin = dados_binarios.reshape(image_size) #[::-1]
         shape = data_bin.shape
         lon = np.arange(shape[1]) * 0.04 - 100
         lat = np.arange(shape[0]) * 0.04 - 50
+        # print(shape)
+ 
+        
+        lon_min=-115.0
+        lon_max=-25.0
+        lat_min=-55.0
+        lat_max=35.0
+
+        
+        ny, nx = data_bin.shape
+         
+        lon = np.linspace(lon_min, lon_max, nx) 
+        lat = np.linspace(lat_max, lat_min, ny)
         return lon, lat, data_bin / 100 - 273.13
 
 def read_dataset(fname):
@@ -101,14 +114,4 @@ class CloudyTemperature(object):
         return np.column_stack((x, y, grid_means))
 
 
-def load_files(ref_day):
-    path = 'E:\\database\\goes\\'
 
-    files = os.listdir(path)
-
-    if ref_day is not None:
-        files  = [f for f in files if fname2date(f) < ref_day]
-   
-    return [os.path.join(path, f) for f in files]
-
- 
