@@ -11,233 +11,112 @@ def goes_cmap(path = 'GOES/src/plots/colorbar.cpt'):
     cpt = gs.loadCPT(path)
     return cm.colors.LinearSegmentedColormap('cpt', cpt) 
 
-
-class plotTopCloud(object):
-    
-    b.sci_format()
-
-    def __init__(
-            self, 
-            data, 
-            lons, 
-            lats, 
-            fig = None, 
-            figsize = (12, 10)
-            ):
-        
-        self.data = data 
-        self.lons = lons
-        self.lats = lats 
-        
-        if (fig is None):
-            self.fig, self.ax = plt.subplots(
-                dpi = 300, 
-                figsize = figsize, 
-                subplot_kw = 
-                {'projection': ccrs.PlateCarree()}
-                )
-            
-           
-    def contour(self, ax):
-        
-        img = ax.imshow(
-            self.data,
-            aspect = 'auto', 
-            extent = [self.lons[0], self.lons[-1], 
-                      self.lats[0], self.lats[-1]],
-            cmap = goes_cmap(), 
-            vmin = -100, 
-            vmax = 100
-            )
-        
-        return img 
-    
-    @property 
-    def figure_axes(self):
-        return self.fig, self.ax 
-    
-    def colorbar(
-            self, 
-            img, ax,
-            orientation = "vertical", 
-            step = 20
-            ):
-
-        ticks = np.arange(-100, 100 + step, step)
-        
-        if orientation == 'horizontal':
-            height = '10%' 
-            width = "80%", 
-            anchor = (-0.26, 0.7, 1.26, 0.55) 
-        else:
-            height = "100%"
-            width = "5%"
-            anchor = (.1, 0., 1, 1)
-            
-        b.colorbar(
-               img, 
-               ax, 
-               ticks, 
-               label = 'Temperature (°C)', 
-               height = height, 
-               width = width,
-               orientation = orientation, 
-               anchor = anchor
-               )
-        return None
-
-        
-    def reference_line(self, lon = None, lat = None):
-        
-        if lon is None:
-            self.ax.axhline(lat, color = 'w', lw = 3)
-        if lat is None:
-            self.ax.axvline(lon, color = 'w', lw = 3)
-            
-        return None 
-    
-    def add_map(self, ax, year = 2013):
-       
-      
-        lat_lims = dict(min = -40, max = 20, stp = 10)
-        lon_lims = dict(min = -90, max = -30, stp = 10) 
-
-        gg.map_attrs(
-            ax, 
-            year, 
-            lat_lims  = lat_lims, 
-            lon_lims = lon_lims,
-            grid = False,
-            degress = None
-            )
-        return lat_lims, lon_lims
-
-    def plot_regions(
-            self, 
-            ax,
-            x_stt, y_stt, 
-            x_end, y_end, 
-            number = None
-            ):
-        
-      
-        rect = plt.Rectangle(
-            (x_stt, y_stt), 
-            x_end - x_stt, 
-            y_end - y_stt,
-            edgecolor = 'k', 
-            facecolor = 'none', 
-            linewidth = 3
-        )
-        
-        ax.add_patch(rect)
-        
-        if number is not None:
-            middle_y = (y_end + y_stt) / 2
-            middle_x = (x_end + x_stt) / 2
-            
-            ax.text(
-                middle_x, 
-                middle_y + 1, number, 
-                transform = ax.transData
-                )
-            
-        return None 
-
-
-def plot_regions(
-        ax, 
-        x_stt, y_stt, 
-        x_end, y_end, 
-        number = None, 
-        color = 'k'
+ 
+def plot_cloud_top_temperature(
+        lon, lat, temp, 
+        ax = None,
+        lat_min = -50, 
+        lat_max = 25,
+        lat_step = 10,
+        lon_min = -100,
+        lon_max = -12, 
+        lon_step = 10
         ):
     
-  
-    rect = plt.Rectangle(
-        (x_stt, y_stt), 
-        x_end - x_stt, 
-        y_end - y_stt,
-        edgecolor = color, 
-        facecolor = 'none', 
-        linewidth = 3
-    )
-    
-    ax.add_patch(rect)
-    
-    if number is not None:
-        middle_y = (y_end + y_stt) / 2
-        middle_x = (x_end + x_stt) / 2
+    if ax is None:
+        dpi=300
+        figsize=(10, 10)
         
-        ax.text(
-            middle_x, 
-            middle_y + 1, number, 
-            transform = ax.transData
-            )
-    return ax 
+        fig, ax = plt.subplots(
+            dpi=dpi,
+            figsize=figsize,
+            subplot_kw={"projection": ccrs.PlateCarree()},
+        )
+        
+    lat_lims = dict(min=lat_min, max=lat_max, stp=lat_step)
+    lon_lims = dict(min=lon_min, max=lon_max, stp=lon_step)
 
-def tracker_plot(ax, ds, color = 'k'):
    
+    img =  ax.pcolormesh(
+        lon, lat, temp, 
+        vmin = -100, 
+        vmax = 100,
+        cmap= goes_cmap(), 
+        transform=ccrs.PlateCarree()
+        )
     
-    lat_lims = dict(min = -40, max = 20, stp = 10)
-    lon_lims = dict(min = -90, max = -30, stp = 10) 
+ 
     
     gg.map_attrs(
-       ax, 2013, 
-       lat_lims = lat_lims, 
-       lon_lims = lon_lims,
-       grid = False,
-       degress = None
-        )
+        ax,
+        year=None,
+        lat_lims=lat_lims,
+        lon_lims=lon_lims,
+        grid=False,
+        degress=None,
+    )
+     
+   
+    step = 20
+    ticks = np.arange(-100, 100 + step, step)
+    height = "100%"
+    width = "5%"
+    anchor = (.1, 0., 1, 1)
     
-    for index, row in ds.iterrows():
-        
-        plot_regions(
-            ax,
-            row['x0'], 
-            row['y0'],
-            row['x1'], 
-            row['y1'], 
-            color = color
-            )
-        
-        mx = (row['x1'] + row['x0']) / 2
-        my = (row['y1'] + row['y0']) / 2
-        ax.scatter(mx, my, s = 100, color = 'red')
-    return ax 
+    b.colorbar(
+           img, 
+           ax, 
+           ticks, 
+           label = 'Temperature (°C)', 
+           height = height, 
+           width = width,
+           orientation = 'vertical', 
+           anchor = anchor
+           )
+    
+    # return fig, ax 
 
 
-def tracker_nucleos(
-        ax, 
-        ds, 
-        color = 'k',
-        temp = -30
+
+def plot_rectangle(
+        ax, x0, 
+        x1, y0, y1, 
+        lw=3, dot_size=50, 
+        number = None
         ):
-    
-    dat, lon, lat = ds.data, ds.lon, ds.lat
-    
-    nl =  gs.find_nucleos(
-              dat, 
-              lon, 
-              lat[::-1],
-              ds.dn,
-              temp_threshold = temp,
-             
-              )
-    count = 0
-    for index, row in nl.iterrows():
-        
-        plot_regions(
-            ax,
-            row['x0'], 
-            row['y0'],
-            row['x1'], 
-            row['y1'], 
-            color = color
-            )
-        
-        mx = (row['x1'] + row['x0']) / 2
-        my = (row['y1'] + row['y0']) / 2
-        ax.scatter(mx, my, s = 100, color = 'red')
+    x0, x1 = sorted([x0, x1])
+    y0, y1 = sorted([y0, y1])
 
+    rect = plt.Rectangle(
+        (x0, y0),
+        x1 - x0,
+        y1 - y0,
+        edgecolor="k",
+        facecolor="none",
+        linewidth=lw,
+        transform=ccrs.PlateCarree(),
+        zorder=5,
+    )
+    ax.add_patch(rect)
+
+    my = (x0 + x1) / 2
+    mx = (y0 + y1) / 2,
+    
+    if dot_size is not None:
+        ax.scatter(
+            mx, my,
+            s=dot_size,
+            color="red",
+            transform=ccrs.PlateCarree(),
+            zorder=6,
+        )
+        
+    if number is not None:
+    
+        ax.text(
+            mx, my + 1, number, 
+            transform=ccrs.PlateCarree()
+            )
+    
+    return None 
 

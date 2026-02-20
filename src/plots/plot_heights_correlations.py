@@ -88,9 +88,4 @@ def plot_latitudes_corr_for_temp(year):
     fig.suptitle(year)
 
 # df1['109'].plot() 
-
-corr = corr_for_each_height()
-
-h = np.arange(20, 111, 1)
-
-plt.plot(corr, h)
+ 

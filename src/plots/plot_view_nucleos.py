@@ -1,62 +1,168 @@
-import GOES  as gs
-from matplotlib import cm
+import GOES  as gs 
 import cartopy.crs as ccrs
-import base as b 
+import datetime as dt 
 import matplotlib.pyplot as plt 
 import numpy as np 
-import GEO as gg 
+ 
+
+def ensure_lat_ascending(lon, lat, temp):
+    """Garante lat crescente e temp alinhado (temp: [lat, lon])."""
+    lon = np.asarray(lon, float)
+    lat = np.asarray(lat, float)
+    temp = np.asarray(temp)
+
+    if lat[0] > lat[-1]:
+        lat = lat[::-1]
+        temp = temp[::-1, :]
+    return lon, lat, temp
+ 
+from matplotlib.patches import Ellipse
+ 
+
+def add_ellipse_from_bbox(
+    ax,
+    lon_min, lon_max,
+    lat_min, lat_max,
+    *,
+    shrink=1.0,
+    edgecolor="k",
+    linewidth=2.5,
+    facecolor="none",
+    zorder=6,
+):
+    # garante ordem
+    x0, x1 = sorted([lon_min, lon_max])
+    y0, y1 = sorted([lat_min, lat_max])
+
+    xc = 0.5 * (x0 + x1)
+    yc = 0.5 * (y0 + y1)
+
+    width = (x1 - x0) * shrink
+    height = (y1 - y0) * shrink
+
+    e = Ellipse(
+        (xc, yc),
+        width=width,
+        height=height,
+        angle=0.0,  # pode rotacionar depois se quiser
+        edgecolor=edgecolor,
+        facecolor=facecolor,
+        linewidth=linewidth,
+        transform=ccrs.PlateCarree(),
+        zorder=zorder,
+    )
+    ax.add_patch(e)
+
+    # marcador no centro (opcional)
+    ax.scatter(
+        xc, yc, s=20, 
+        color="red", 
+        transform=ccrs.PlateCarree(), 
+        zorder=zorder + 1
+        )
+
+    return e
 
 
-def test_plot(fname, temp = -30):
+def plot_view_nucleos(
+        lon, lat, temp, 
+        threshold=-40,
+        draw_regions=True, 
+        dot_size = None
+        ):
+    lon, lat, temp = ensure_lat_ascending(lon, lat, temp)
+ 
+
+    nl = gs.find_nucleos(       
+        lon,
+        lat,
+        temp,
+        dn=None,
+        temp_threshold=threshold,
+    )
     
-    fig, ax = plt.subplots(
-        dpi = 300, 
-        figsize = (10, 10), 
-        subplot_kw = 
-        {'projection': ccrs.PlateCarree()}
+   
+    fig, ax  =  gs.plot_cloud_top_temperature(lon, lat, temp)
+    if dot_size is not None:
+        for _, row in nl.iterrows():
+            x0, x1 = row["lon_min"], row["lon_max"]
+            y0, y1 = row["lat_min"], row["lat_max"]
+            add_ellipse_from_bbox(
+                ax,
+                x0, x1,
+                y0, y1
+                )
+            # gs.plot_rectangle(
+            #         ax, x0, 
+            #         x1, y0, y1, 
+            #         lw=3, 
+            #         dot_size=None, 
+            #         number = None
+            #         )
+  
+    return fig, ax, nl
+
+
+# --------- example usage ---------
+def example_usage():
+    dn = dt.datetime(2015, 1, 1)
+    files = gs.walk_goes(dn, B="D")
+    fn = files[3]
+    print(fn)
+    fn = 'GOES/data/S10635346_201801010100.nc'
+    # lon, lat, temp = gs.read_gzbin(fn)
+    lon, lat, temp = gs.read_dataset(fn)
+    
+    threshold = -40
+    
+    fig, ax, nl = plot_view_nucleos(
+        lon, lat, temp, 
+        threshold=threshold, 
+        draw_regions=False, 
+        dot_size = None
         )
     
-    ds = gs.CloudyTemperature(fname)
+    ax.set(title = gs.fn2dn(fn).strftime('%Y-%m-%d %H:%M'))
+    plt.show()
     
-    dat, lon, lat = ds.data, ds.lon, ds.lat
-  
-    ptc = gs.plotTopCloud(dat, lon, lat, fig)
-    img = ptc.contour(ax)
-    ptc.add_map(ax)
-    ptc.colorbar(img, ax)
-        
-    ax.set(title = ds.dn)
+    # nl = gs.find_nucleos(       
+    #     lon,
+    #     lat,
+    #     temp,
+    #     dn= gs.fn2dn(fn),
+    #     temp_threshold=threshold,
+    # )
     
-    nl =  gs.find_nucleos(
-              dat, 
-              lon, 
-              lat[::-1],
-              ds.dn,
-              temp_threshold = temp,
-             
-              )
-    count = 0
-    for index, row in nl.iterrows():
-        count += 1
-        ptc.plot_regions(
-            ax,
-            row['lon_min'], 
-            row['lat_min'],
-            row['lon_max'], 
-            row['lat_max'], 
-            # number = count
-            # i = indexs
-            )
-        
-    return fig 
-
-import datetime as dt 
-
-def main():
-    dn = dt.datetime(2018, 1, 7, 19, 45)
-    folder = dn.strftime('%Y\\%m\\S10635346_%Y%m%d%H%M.nc')
-    fname = f'E:\\database\\goes\\{folder}'
+    # nl
     
-    fig = test_plot(fname, temp = -60)
+fn = "D:\\database\\goes\\2012\\01\\S10216956_201201010600.gz"
+fn = "D:\\database\\goes\\2012\\S10236965_201202020000.gz"
+# lon, lat, temp = gs.read_gzbin(fn)
+# lon, lat, temp = gs.read_dataset(fn)
+# import gzip
+# with gzip.open(fn, 'rb') as f:
+    
+#     dados_binarios = np.frombuffer(
+#         f.read(), 
+#         dtype = np.int16
+#         ).astype(np.float32)
 
-main()
+# image_size = [1714, 1870] 
+# data_bin = dados_binarios.reshape(image_size)  
+ 
+# dx = 0.04,
+# dy = 0.04,
+ 
+# lon_min = -100.0
+# lat_max =  12.0 
+    
+# ny, nx = tuple(image_size)
+
+ 
+# lon = lon_min + np.arange(nx) * dx
+# lat = lat_max - np.arange(ny) * dy   
+ 
+# temp = data_bin / 100 - 273.13
+
+
+# fig, ax = gs.plot_cloud_top_temperature(lon, lat, temp)
