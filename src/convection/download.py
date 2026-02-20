@@ -51,7 +51,8 @@ def download_goes_month(
     skip_existing: bool = True,
     ) -> list[str]:
     """
-    Baixa arquivos GOES do mês (CPTEC FTP) para drive:\\database\\goes\\YYYY\\MM\\
+    Baixa arquivos GOES do mês (CPTEC FTP) 
+    para drive:\\database\\goes\\YYYY\\MM\\
     Retorna lista dos arquivos baixados.
     """
     url = goes_url(year, month)
@@ -78,15 +79,55 @@ def download_goes_month(
 
     return downloaded
 
+import datetime as dt 
 
 # --------- exemplo: março a dezembro de 2023 ---------
-year = 2013
-for month in range(1, 13):
- 
-    downloaded = download_goes_month(
-        year, 
-        month, 
-        drive = "F", only_minute_zero=True)
-    print(f"{month:02d}/2023: {len(downloaded)} arquivos baixados")
+# year = 2012
+# for month in range(2, 13):
+# # month = 1
+#     downloaded = download_goes_month(
+#         year, 
+#         month, 
+#         drive = "D", 
+#         only_minute_zero=True
+#         )
+#     print(f"{month:02d}/{year}: {len(downloaded)} arquivos baixados")
+    
+dn = dt.datetime(2012, 2, 2, 3)
+
+def image_url(dn):
+    url = 'https://ftp.cptec.inpe.br/goes/goes13/goes13_web/ams_ir2_alta'
+    url += f'/{dn.year}/{dn.day:02d}/'
+    hrefs = wb.request(url)
+    fname = [href for href in hrefs if fn2dn(href) == dn][0]
+
+    return  url + fname    
+
+def fn2dn(fname):
+    dn = fname.split('_')[-1][:-4]
+    try:
+        return dt.datetime.strptime(dn, '%Y%m%d%H%M%S')
+    except:
+        return ''
+
+
+
+
+import requests
+from io import BytesIO
+from PIL import Image
+import matplotlib.pyplot as plt
+
+def imshow_url(url):
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    img = Image.open(BytesIO(r.content))
+    plt.figure(dpi=200)
+    plt.imshow(img)
+    plt.axis("off")
+    plt.show()
+    return img
 
  
+url_img =image_url(dn)
+img =  imshow_url(url_img)
