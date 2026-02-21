@@ -16,11 +16,12 @@ def plot_cloud_top_temperature(
         lon, lat, temp, 
         ax = None,
         lat_min = -50, 
-        lat_max = 25,
+        lat_max = 10,
         lat_step = 10,
         lon_min = -100,
-        lon_max = -12, 
-        lon_step = 10
+        lon_max = -30, 
+        lon_step = 10, 
+        dn = None
         ):
     
     if ax is None:
@@ -74,8 +75,12 @@ def plot_cloud_top_temperature(
            anchor = anchor
            )
     
-    # return fig, ax 
-
+    if dn is not None:
+        ax.set(title = dn.strftime('%Y-%m-%d %H:%M'))
+        
+    return ax
+    
+ 
 
 
 def plot_rectangle(

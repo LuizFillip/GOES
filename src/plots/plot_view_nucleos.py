@@ -3,6 +3,7 @@ import cartopy.crs as ccrs
 import datetime as dt 
 import matplotlib.pyplot as plt 
 import numpy as np 
+from matplotlib.patches import Ellipse
  
 
 def ensure_lat_ascending(lon, lat, temp):
@@ -16,8 +17,7 @@ def ensure_lat_ascending(lon, lat, temp):
         temp = temp[::-1, :]
     return lon, lat, temp
  
-from matplotlib.patches import Ellipse
- 
+
 
 def add_ellipse_from_bbox(
     ax,
@@ -122,7 +122,7 @@ def example_usage():
         dot_size = None
         )
     
-    ax.set(title = gs.fn2dn(fn).strftime('%Y-%m-%d %H:%M'))
+    
     plt.show()
     
     # nl = gs.find_nucleos(       
@@ -135,34 +135,3 @@ def example_usage():
     
     # nl
     
-fn = "D:\\database\\goes\\2012\\01\\S10216956_201201010600.gz"
-fn = "D:\\database\\goes\\2012\\S10236965_201202020000.gz"
-# lon, lat, temp = gs.read_gzbin(fn)
-# lon, lat, temp = gs.read_dataset(fn)
-# import gzip
-# with gzip.open(fn, 'rb') as f:
-    
-#     dados_binarios = np.frombuffer(
-#         f.read(), 
-#         dtype = np.int16
-#         ).astype(np.float32)
-
-# image_size = [1714, 1870] 
-# data_bin = dados_binarios.reshape(image_size)  
- 
-# dx = 0.04,
-# dy = 0.04,
- 
-# lon_min = -100.0
-# lat_max =  12.0 
-    
-# ny, nx = tuple(image_size)
-
- 
-# lon = lon_min + np.arange(nx) * dx
-# lat = lat_max - np.arange(ny) * dy   
- 
-# temp = data_bin / 100 - 273.13
-
-
-# fig, ax = gs.plot_cloud_top_temperature(lon, lat, temp)

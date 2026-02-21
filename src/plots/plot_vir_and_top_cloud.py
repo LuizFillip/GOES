@@ -60,10 +60,10 @@ def plot_vir_and_top_cloud(dn):
     plot_vir_image(ax0, dn)
     plot_top_cloud_temp(ax1, dn)
 
-    fig.suptitle(dn.strftime('%Y-%m-%d %H:%M'), y = 0.73)
+    fig.suptitle(dn.strftime('%Y-%m-%d %H:%M UT'), y = 0.73)
     
     return fig
 
-dn = dt.datetime(2015, 1, 3, 0)
-
+dn = dt.datetime(2015, 1, 3)
+ 
 fig = plot_vir_and_top_cloud(dn)
