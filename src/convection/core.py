@@ -6,7 +6,7 @@ import os
 import xarray as xr
 
 
-def read_gzbin(f_name):
+def read_gzbin(f_name,  lat_max =  12.0, lon_min = -100.0, dy = 0.04):
  
     with gzip.open(f_name, 'rb') as f:
         
@@ -16,26 +16,16 @@ def read_gzbin(f_name):
             )
 
         image_size = [1714, 1870]
-        # image_size = [1200, 1335]
-        data_bin = dados_binarios.reshape(image_size) #[::-1]
-        shape = data_bin.shape
-        lon = np.arange(shape[1]) * 0.04 - 100
-        lat = np.arange(shape[0]) * 0.04 - 50
-        # print(shape)
- 
-        
-        lon_min=-115.0
-        lon_max=-25.0
-        lat_min=-55.0
-        lat_max=35.0
+        data_bin = dados_binarios.reshape(image_size)  
+           
+        ny, nx = tuple(image_size)
 
+        lon = lon_min + np.arange(nx) * dy
+        lat = lat_max - np.arange(ny) * dy   
         
-        ny, nx = data_bin.shape
-         
-        lon = np.linspace(lon_min, lon_max, nx) 
-        lat = np.linspace(lat_max, lat_min, ny)
-        return lon, lat, data_bin / 100 - 273.13
-
+        temp = data_bin / 100 - 273.13
+        
+        return lon, lat, temp
 def read_dataset(fname):
     
     ds = xr.open_dataset(fname)
@@ -48,35 +38,11 @@ def read_dataset(fname):
     return lons, lats, data 
 
 
-def fname2date(fname):
-    dn = fname.split('_')[-1][:-3]
-    try:
-        return dt.datetime.strptime(dn, '%Y%m%d%H%M')
-    except:
-        return dt.datetime.strptime(dn, '%Y%m%d%H%M%S')
-
 
 
 
 class CloudyTemperature(object):
-    
-    def __init__(self, fname):
-        self.fname = fname
-        
-        self.dn = fname2date(fname)
-        
-        if self.dn.year < 2018:
-            self.data = read_gzbin(fname)
-            shape = self.data.shape
-            self.lon = np.arange(shape[1]) * 0.04 - 100
-            self.lat = np.arange(shape[0]) * 0.04 - 50
-        else:
-            lon, lat, data = read_dataset(fname)
-            self.lon = lon
-            self.lat = lat
-            self.data = data
-            
-            
+ 
     @property
     def to_dataset(self):
         data = self.structured_data(
@@ -93,16 +59,7 @@ class CloudyTemperature(object):
         
         return ds 
     
-    @property
-    def to_pivot(self):
-        ds = self.to_dataset
-        return pd.pivot_table(
-            ds, 
-            columns = 'lon', 
-            index = 'lat', 
-            values = 'temp'
-            )
-    
+ 
     @staticmethod
     def structured_data(nlons, nlats, grid):
         x, y = np.meshgrid(nlons, nlats)
