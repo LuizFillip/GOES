@@ -2,7 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 from tqdm import tqdm
 import base as b
-import Webscrape as wb
+import scrap as wb
 import GOES as gs
 import datetime as dt 
 import requests
@@ -68,10 +68,9 @@ def download_goes_month(
     for href in tqdm(hrefs, desc=desc):
         
         if not _is_candidate_file(href):
-             
             continue
-        if not _minute_filter_ok(href, only_minute_zero):
-            continue
+        # if not _minute_filter_ok(href, only_minute_zero):
+        #     continue
        
         out_path = out_dir / href
         if skip_existing and out_path.exists():
@@ -83,10 +82,10 @@ def download_goes_month(
     return downloaded
 
 
-def download_main(year = 2012):
+def download_main(year = 2012, start = 1, end = 12):
     
-    for month in range(2, 13):
-    # month = 1
+    for month in range(start, end + 1):
+ 
         downloaded = download_goes_month(
             year, 
             month, 
@@ -124,4 +123,4 @@ def imshow_url(url):
  
     return Image.open(BytesIO(r.content))
 
-# download_main(2014)
+# download_main(2013)
