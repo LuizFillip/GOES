@@ -8,7 +8,7 @@ import base as b
 b.sci_format(fontsize = 20)
 
 
-def plot_vir_image(ax0, dn):
+def plot_vir_image(ax, dn):
     url_img = gs.image_url(dn)
     img =  gs.imshow_url(url_img)
     
@@ -17,12 +17,15 @@ def plot_vir_image(ax0, dn):
     lat_min = -55
     lon_min = -100
     extent = [lon_min, lon_max, lat_min, lat_max]
-    ax0.imshow(
+    ax.imshow(
         img, 
-        origin="upper",
-     transform=ccrs.PlateCarree(),
-               extent = extent)
-    ax0.axis("off")
+        origin = "upper",
+        transform = ccrs.PlateCarree(),
+        extent = extent
+        )
+    ax.axis("off")
+    
+    return img 
 
 def plot_top_cloud_temp(ax1, dn):
     fn = gs.get_path_by_dn(dn)
@@ -40,6 +43,8 @@ def plot_top_cloud_temp(ax1, dn):
         lat_min = -55, 
         lon_min = -100
         )
+    
+    return  lon, lat, temp
 
 
 def plot_vir_and_top_cloud(dn):
@@ -64,6 +69,6 @@ def plot_vir_and_top_cloud(dn):
     
     return fig
 
-dn = dt.datetime(2015, 1, 3)
+dn = dt.datetime(2013, 2, 1)
  
 fig = plot_vir_and_top_cloud(dn)
