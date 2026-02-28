@@ -1,10 +1,22 @@
 import gzip
 import numpy as np
 import pandas as pd 
- 
 import xarray as xr
 
+def ensure_lat_ascending(lon, lat, temp):
+    """Garante lat crescente e temp alinhado
+    (temp: [lat, lon])."""
+    lon = np.asarray(lon, float)
+    lat = np.asarray(lat, float)
+    temp = np.asarray(temp)
 
+    if lat[0] > lat[-1]:
+        lat = lat[::-1]
+        temp = temp[::-1, :]
+    return lon, lat, temp
+ 
+    
+ 
 def read_gzbin(
         f_name,  
         lat_max = 13.0, 

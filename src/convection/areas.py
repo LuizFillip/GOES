@@ -31,7 +31,8 @@ def area_mask_km2(data, lats, lons, temp_threshold):
     area_km2 = np.sum(mask * pixel_area_by_lat[:, None])
     return float(area_km2)
 
-def cold_area_in_bbox_km2(temp, lon, lat, threshold, lon_min, lon_max, lat_min, lat_max, R=6371.0):
+def cold_area_in_bbox_km2(
+        temp, lon, lat, threshold, lon_min, lon_max, lat_min, lat_max, R=6371.0):
     lon1, lon2 = sorted([lon_min, lon_max])
     lat1, lat2 = sorted([lat_min, lat_max])
 
@@ -53,8 +54,11 @@ def cold_area_in_bbox_km2(temp, lon, lat, threshold, lon_min, lon_max, lat_min, 
     mask = np.isfinite(sub) & (sub <= threshold)
 
     # resolução (assumindo quase regular)
-    dlat = np.abs(np.median(np.diff(sub_lat))) if len(sub_lat) > 1 else np.abs(np.median(np.diff(lat)))
-    dlon = np.abs(np.median(np.diff(sub_lon))) if len(sub_lon) > 1 else np.abs(np.median(np.diff(lon)))
+    dlat = np.abs(
+        np.median(np.diff(sub_lat))
+        ) if len(sub_lat) > 1 else np.abs(np.median(np.diff(lat)))
+    dlon = np.abs(
+        np.median(np.diff(sub_lon))) if len(sub_lon) > 1 else np.abs(np.median(np.diff(lon)))
 
     dlat_rad = np.deg2rad(dlat)
     dlon_rad = np.deg2rad(dlon)

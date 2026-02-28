@@ -8,111 +8,80 @@ import cartopy.crs as ccrs
 pd.options.mode.chained_assignment = None
 
 
-def size_by_grid(
-        df, 
-        step = 1, 
-        rounding = 0
-        ):
- 
-    lon_bins = np.arange(
-        df['lon'].min(), 
-        df['lon'].max() + step, step
-        )
-    lat_bins = np.arange(
-        df['lat'].min(), 
-        df['lat'].max() + step, step
-        )
-    
-    df['lon_bin'] = pd.cut(
-        df['lon'], 
-        bins = lon_bins, 
-        labels = lon_bins[:-1]
-        )
-    df['lat_bin'] = pd.cut(
-        df['lat'], 
-        bins = lat_bins, 
-        labels = lat_bins[:-1]
-        )
-    
-    df.loc[:, 'lon_bin'] = df['lon_bin'].astype(
-        float).round(rounding)
-    df.loc[:, 'lat_bin'] = df['lat_bin'].astype(
-        float).round(rounding)
+def size_by_grid(df, step=1, rounding=0):
 
-      
-    event_count = df.groupby(
-        ['lon_bin', 'lat_bin']
-        ).mean().reset_index()
+    df = df.copy()  # evita alterar o original
+
+    # centro do núcleo
+    df["lon"] = (df["lon_min"] + df["lon_max"]) / 2
+    df["lat"] = (df["lat_min"] + df["lat_max"]) / 2
+
+    # bins
+    lon_bins = np.arange(df["lon"].min(), df["lon"].max() + step, step)
+    lat_bins = np.arange(df["lat"].min(), df["lat"].max() + step, step)
+
+    df["lon_bin"] = pd.cut(
+        df["lon"],
+        bins=lon_bins,
+        labels=lon_bins[:-1],
+        include_lowest=True
+    )
+
+    df["lat_bin"] = pd.cut(
+        df["lat"],
+        bins=lat_bins,
+        labels=lat_bins[:-1],
+        include_lowest=True
+    )
+
+    # conversão limpa (sem warning)
+    df["lon_bin"] = df["lon_bin"].astype(float).round(rounding)
+    df["lat_bin"] = df["lat_bin"].astype(float).round(rounding)
+
+    # groupby mais moderno
+    event_count = (
+        df.groupby(["lon_bin", "lat_bin"], observed=True)
+          .size(numeric_only=True)
+          .reset_index()
+    )
     
+    # df = df.resample(sample).size()
+
     return event_count
 
 
 
 
-def plot_map(ax, ds, year = 2013):
+def plot_map(ax, ds):
 
     lat_lims = dict(min = -40, max = 20, stp = 10)
     lon_lims = dict(min = -90, max = -30, stp = 15) 
     
     gg.map_attrs(
        ax, 
-       year, 
+       year = None, 
        lat_lims = lat_lims, 
        lon_lims = lon_lims,
        grid = False,
        degress = None
         )
     
-    gg.plot_rectangles_regions(ax, year, color = 'k')
-
-    img = ax.contourf(
+    img = ax.pcolormesh(
         ds.columns, 
         ds.index, 
         ds.values, 
-        levels = np.linspace(9, 14, 20),
+        
+        vmin = 0, 
+        vmax = 100,
         cmap = 'jet'
         )
     
     return img 
     
 
-def set_data(
-        ds, 
-        step = 3, 
-        values = 'mean_60_90'
-        ):
-    
-    df = size_by_grid(
-            ds, 
-            step = step, 
-            rounding = 0
-            )
+ 
 
-    ds = pd.pivot_table(
-        df, 
-        columns = 'lon_bin', 
-        index = 'lat_bin', 
-        values = values
-        )
-
-    return ds 
-
-def plot_big_square(axes):
-    x_stt = -70
-    x_end = -40
-    y_stt = -20
-    y_end = 10
-    
-    rect = plt.Rectangle(
-        (x_stt, y_stt), 
-        x_end - x_stt, 
-        y_end - y_stt,
-        edgecolor = 'k', 
-        facecolor = 'none', 
-        linewidth = 3
-    )
-    
-    axes.add_patch(rect)
+ 
 
 def plot_seasonal_occurrence(
         ax, 
@@ -181,9 +150,7 @@ def plot_seasonal_occurrence(
 
        
 def plot_seasonal_Ep_contours():
-    
-    b.config_labels(fontsize = 25)
-        
+     
     fig, axs = plt.subplots(
           dpi = 300, 
           ncols = 4, 
@@ -228,9 +195,61 @@ def plot_seasonal_Ep_contours():
     return fig
 
 
-fig = plot_seasonal_Ep_contours()
+ 
 
-save_in = 'G:\\My Drive\\Papers\\Paper 2\\Midnight EPBs\\Eps\\img\\'
+ds = b.load("nucleos_2012_2018")   
 
-# fig.savefig(save_in + 'seasonal_contours', dpi = 300
-#             )
+
+df = ds[[ 'lon_min', 'lon_max', 'lat_min', 'lat_max']].copy()  # evita alterar o original
+
+step = 2.5
+rounding = 0
+# centro do núcleo
+df["lon"] = (df["lon_min"] + df["lon_max"]) / 2
+df["lat"] = (df["lat_min"] + df["lat_max"]) / 2
+
+# bins
+lon_bins = np.arange(df["lon"].min(), df["lon"].max() + step, step)
+lat_bins = np.arange(df["lat"].min(), df["lat"].max() + step, step)
+
+df["lon_bin"] = pd.cut(
+    df["lon"], bins = lon_bins,
+    labels=lon_bins[:-1],
+    include_lowest=True
+)
+
+df["lat_bin"] = pd.cut(
+    df["lat"], bins = lat_bins,
+    labels = lat_bins[:-1],
+    include_lowest = True
+)
+
+# conversão limpa (sem warning)
+df["lon_bin"] = df["lon_bin"].astype(float).round(rounding)
+df["lat_bin"] = df["lat_bin"].astype(float).round(rounding)
+
+
+ 
+df = df.groupby(["lon_bin", "lat_bin"]).size().to_frame('count').reset_index()
+      
+
+df['count']  = (df['count']  / df['count'].max()) * 100
+
+ds = pd.pivot_table(
+     df, 
+     columns = 'lon_bin', 
+     index = 'lat_bin', 
+     values = 'count'
+     ).interpolate()
+
+fig, ax = plt.subplots(
+      dpi = 300, 
+      # ncols = 4, 
+      # nrows = 1, 
+      figsize = (10,10),
+      subplot_kw = 
+      {'projection': ccrs.PlateCarree()}
+      )
+
+
+plot_map(ax, ds)
