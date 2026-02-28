@@ -1,15 +1,7 @@
 import os 
 import datetime as dt
 
-# def load_files(ref_day):
-#     path = 'E:\\database\\goes\\'
-
-#     files = os.listdir(path)
-
-#     if ref_day is not None:
-#         files  = [f for f in files if fname2date(f) < ref_day]
-   
-#     return [os.path.join(path, f) for f in files]
+ 
 
 def walk_goes(dn, B = 'E'):
     
