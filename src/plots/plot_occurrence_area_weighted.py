@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
-import base as b
-import GEO as gg
+import GOES as gs
  
+import matplotlib.colors as colors
+ 
+import datetime as dt 
+from scipy.ndimage import gaussian_filter
 
 R = 6371  # km
 
@@ -16,10 +18,8 @@ def bbox_area_km2(lon_min, lon_max, lat_min, lat_max):
 
     return (R**2) * np.abs(lon2 - lon1) * np.abs(np.sin(lat2) - np.sin(lat1))
 
-def occurrence_area_weighted(nl_season, lon_bins, lat_bins):
-
-    df = nl_season.copy()
-
+def occurrence_area_weighted(df, lon_bins, lat_bins):
+ 
     df["lon"] = (df["lon_min"] + df["lon_max"]) / 2
     df["lat"] = (df["lat_min"] + df["lat_max"]) / 2
 
@@ -46,104 +46,83 @@ def occurrence_area_weighted(nl_season, lon_bins, lat_bins):
 
     return grid.fillna(0)
 
+ 
+
+
+# nl = b.load("nucleos_2012_2018")   
+
+# fig = plot_seasonal_occurrence_from_nl(nl, step = 5.0)
 
 
 
-def plot_map_occ(ax, grid):
+def plot_raw_occurrence_area_weighted(dn,  cmap = 'plasma'):
+   
+    lon_bins, lat_bins = gs.get_bins(nl, step = 2)
     
-    lat_lims = dict(min=-60, max=10, stp=10)
-    lon_lims = dict(min=-100, max=-30, stp=15)
+ 
+    grid = occurrence_area_weighted(nl, lon_bins, lat_bins)
+    smooth = gaussian_filter(grid.values, sigma=1.5)
+  
+    vmax = np.nanpercentile(grid.values, 99)   
+    norm = colors.Normalize(vmin=0, vmax=vmax)
     
-    gg.map_attrs(
-        ax, None, 
-        lat_lims = lat_lims, 
-        lon_lims = lon_lims, 
-        grid = False, 
-        degress = None
-        )
-      
-    img = ax.pcolormesh(
+ 
+    fig, ax = gs.map_defout(ncols=2)
+    
+    # Painel 1
+    img1 = ax[0].pcolormesh(
         grid.columns,
         grid.index,
         grid.values,
-        # vmin = 0, 
-        # vmax = 100,
-        cmap="jet", 
+        cmap= cmap,   # melhor que jet
+        norm=norm,
+        shading="auto"
     )
     
-    # img = ax.contourf(
-    #     grid.columns,
-    #     grid.index,
-    #     grid.values,
-    #     levels = 50,
-    #     cmap="jet", 
-    # )
+    ax[0].set_title("Raw occurrence")
     
-    return img
-
-
-
-seasons = {
-    "December": [12, 1, 2],
-    "March": [3, 4, 5],
-    "June": [6, 7, 8],
-    "September": [9, 10, 11],
-}
-
-def plot_seasonal_occurrence_from_nl(nl, step=2.0):
-    
-    fig, ax = plt.subplots(
-        dpi=300, 
-        ncols=4, 
-        nrows=1, 
-        figsize=(16, 10),
-        subplot_kw={"projection": ccrs.PlateCarree()},
+    # Painel 2
+    img2 = ax[1].pcolormesh(
+        grid.columns,
+        grid.index,
+        smooth,
+        cmap= cmap,
+        norm=norm,
+        shading="auto"
     )
-    plt.subplots_adjust(wspace=0.02, hspace=0.12)
-
-    axes = ax.flat 
-    lat_min = np.round(nl['lat_min'].min())
-    lon_min = np.round(nl['lon_min'].min())
-    lon_max = np.round(nl['lon_max'].max())
-    lat_max = np.round(nl['lat_max'].max())
     
+    ax[1].set_title("Smoothed occurrence")
     
-    lon_bins = np.arange(lon_min, lon_max + step, step)
-    lat_bins = np.arange(lat_min, lat_max + step, step)
-    
-    for i, (name, months) in enumerate(seasons.items()):
-        nl_season = nl.loc[nl.index.month.isin(months)]
-        
-        grid = occurrence_area_weighted(
-            nl_season, lon_bins, lat_bins)
-        
-        img = plot_map_occ(axes[i], grid)
-
-        l = b.chars()[i]
-        axes[i].set_title(f"({l}) {name}", fontsize=28)
-
-        if i != 0:
-            axes[i].set(
-                xticklabels=[], 
-                xlabel="", 
-                ylabel="", 
-                yticklabels=[]
-                )
-            
-    anchor = [0.3, 0.78, 0.4, 0.025]
-    cax = plt.axes(anchor)
+ 
+    cax = ax[1].inset_axes([1.03, 0, 0.04, 1])
+     
     cbar = fig.colorbar(
-        img, ax=ax.ravel().tolist(), 
-        orientation = "horizontal",
-        cax = cax,
-        )
-
-    cbar.set_label("Convection activity (\%)", fontsize=22)
+        img1,
+        ax=ax,
+        orientation="vertical",
+     
+        cax  = cax
+    )
     
-    # fig.suptitle(str(year), y=0.98, fontsize=28)
-    return fig
+    cbar.set_label("Area-weighted occurrence (km²)")
+    
+    fig.suptitle(dn.strftime('%Y-%m-%d %H:%M'), y = 0.8)
+    
+    plt.tight_layout()
+    plt.show()
+    
+dn = dt.datetime(2013, 2, 1)
 
+ 
+fn = gs.get_path_by_dn(dn)
 
-nl = b.load("nucleos_2012_2018")   
+lon, lat, temp = gs.read_gzbin(fn)
 
-fig = plot_seasonal_occurrence_from_nl(nl, step = 5.0)
+nl = gs.find_nucleos(       
+    lon,
+    lat,
+    temp,
+    dn=None,
+    temp_threshold= -40,
+)
+nl 

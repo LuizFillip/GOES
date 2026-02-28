@@ -81,18 +81,20 @@ def get_bins(nl, step = 2):
 
 
 
-def map_defout(ncols = 2, grid = False):
+def map_defout(
+        figsize = (16, 12),
+        ncols = 2, grid = False, lon_min = -80):
     
     fig, axs = plt.subplots(
         dpi = 300, 
         ncols = ncols,
         sharex = True, 
-        figsize = (16, 12),
+        figsize = figsize,
         subplot_kw = {"projection": ccrs.PlateCarree()},
     )
     
     lats = dict(min = -60, max = 10, stp = 10)
-    lons = dict(min = -100, max= -30, stp = 15)
+    lons = dict(min = lon_min, max= -30, stp = 15)
     
     xlocs = np.arange(lons['min'], lons['max'], 4)
     ylocs = np.arange(lats['min'], lats['max'], 4)

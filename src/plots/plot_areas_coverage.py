@@ -4,8 +4,6 @@ import cartopy.crs as ccrs
 import datetime as dt 
 import GOES as gs 
  
-dn = dt.datetime(2013, 2, 1)
-
 
 def plot_steps_for_grid_occurrence(dn):
     fn = gs.get_path_by_dn(dn)
