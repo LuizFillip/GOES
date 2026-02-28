@@ -1,14 +1,14 @@
 import pandas as pd 
 import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
 from scipy.ndimage import gaussian_filter
-import os
+import GEO as gg
 import datetime as dt 
 import GOES as gs 
 import base as b 
+import numpy as np 
 
-from scipy.ndimage import gaussian_filter
-
-b.sci_format()
+b.sci_format(fontsize = 20)
  
  
 
@@ -36,14 +36,14 @@ def occurrence_rate_grid(
           .to_frame("hits")
           .reset_index()
     )
-
     counts["occurrence_%"] = (counts["hits"] / n_total) * 100
-
+    values = "occurrence_%"
+        
     grid = pd.pivot_table(
         counts,
-        index="lat_bin",
-        columns="lon_bin",
-        values="occurrence_%"
+        index = "lat_bin",
+        columns = "lon_bin",
+        values = values 
     )
 
     return grid.fillna(0)
@@ -68,8 +68,142 @@ def occurrence_kernel_smooth(
         columns=grid.columns
     )
 
-dn = dt.datetime(2013, 2, 1)
+def get_bins(nl, step = 2):
+    lat_min = np.round(nl['lat_min'].min())
+    lon_min = np.round(nl['lon_min'].min())
+    lon_max = np.round(nl['lon_max'].max())
+    lat_max = np.round(nl['lat_max'].max())
+    
+    lon_bins = np.arange(lon_min, lon_max + step, step)
+    lat_bins = np.arange(lat_min, lat_max + step, step)
+    
+    return lon_bins, lat_bins 
 
-fn = gs.get_path_by_dn(dn)
 
-lon, lat, temp = gs.read_gzbin(fn)
+
+def map_defout(ncols = 2, grid = False):
+    
+    fig, axs = plt.subplots(
+        dpi = 300, 
+        ncols = ncols,
+        sharex = True, 
+        figsize = (16, 12),
+        subplot_kw = {"projection": ccrs.PlateCarree()},
+    )
+    
+    lats = dict(min = -60, max = 10, stp = 10)
+    lons = dict(min = -100, max= -30, stp = 15)
+    
+    xlocs = np.arange(lons['min'], lons['max'], 4)
+    ylocs = np.arange(lats['min'], lats['max'], 4)
+    
+    for i, ax in enumerate(axs):
+        gg.map_attrs(
+            ax, None, 
+            lat_lims = lats, 
+            lon_lims = lons, 
+            grid = False, 
+            degress = None
+            )
+        if grid:
+            ax.gridlines(
+                xlocs = xlocs,
+                ylocs = ylocs,
+                linewidth=1,
+                color='k',
+                linestyle='--'
+            )
+        
+        if i !=0:
+            ax.set( 
+              
+                yticklabels = [], 
+                ylabel = ''
+                )
+     
+    
+    return fig, axs
+    
+    
+
+
+def plot_occurrence_rate_grid(
+        ax,
+        nl,
+        lon_bins,
+        lat_bins
+        ):
+    
+    n_total = len(nl.index.unique())
+
+    grid = occurrence_rate_grid(
+        nl,
+        lon_bins,
+        lat_bins,
+        n_total= n_total
+    )
+    
+    ax[1].contourf(
+        grid.columns,
+        grid.index,
+        grid.values,
+        levels = 50,
+        cmap="jet", 
+    )
+     
+    for _, row in nl.iterrows():
+        x0, x1 = row["lon_min"], row["lon_max"]
+        y0, y1 = row["lat_min"], row["lat_max"]
+        
+        gs.add_ellipse_from_bbox(
+            ax[0],
+            x0, x1,
+            y0, y1
+            )
+        
+        gs.add_ellipse_from_bbox(
+            ax[1],
+            x0, x1,
+            y0, y1
+            )
+    
+    ax[1].set( title = 'Occurrence grid (4x4)')
+    
+    return None 
+    
+
+def plot_kernel_smooth(ax, nl, lon_bins, lat_bins):
+    
+    grid = occurrence_kernel_smooth(
+            nl, 
+            lon_bins, 
+            lat_bins, 
+            sigma = 1.5
+            )
+    
+    
+    ax[2].contourf(
+        grid.columns,
+        grid.index,
+        grid.values,
+        levels = 50,
+        cmap="jet", 
+    )
+    
+     
+    for _, row in nl.iterrows():
+        x0, x1 = row["lon_min"], row["lon_max"]
+        y0, y1 = row["lat_min"], row["lat_max"]
+        
+        my = (x0 + x1) / 2
+        mx = (y0 + y1) / 2
+        
+        ax[2].scatter(mx, my, color = 'red')
+        
+    ax[2].set( 
+        title = 'Gaussian filter ($\sigma = 1.5$)',
+        
+        )
+    
+    return None 
+
