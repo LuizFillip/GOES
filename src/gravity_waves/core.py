@@ -74,21 +74,20 @@ def latitudinal_data_ep(
     return ds.loc[ds.index.year == year]
 
 
-def group_by_time(
-        df, 
-        stp = 'month', 
-        col = '90_110', 
-        name = 'wave'
-        ):
-    
-    col = f'mean_{col}'
-    
-    df['month'] = df.index.month 
-    df['year'] = df.index.year
-    
-    df = df.between_time(
-        '18:00', '05:00')
-    
-    df = df.groupby([stp])[col].mean()
+ 
 
-    return df.to_frame(name)
+import base as b  
+# df = latitudinal_data_ep(
+#         year = 2013,
+#         lat_min = -10,
+#         lat_max = 0
+#         )
+
+# df = b.load()
+infile = 'GOES/data/Select_ep_data_lat_lon_2013.txt'
+# raw = scipy.io.loadmat(infile)
+
+# raw 
+
+df = pd.read_csv(infile, sep = '\s+')
+
