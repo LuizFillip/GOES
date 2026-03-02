@@ -85,6 +85,7 @@ def plot_rectangle(
         ax, x0, 
         x1, y0, y1, 
         lw=3, dot_size=50, 
+        color = 'k',
         number = None
         ):
     x0, x1 = sorted([x0, x1])
@@ -94,7 +95,7 @@ def plot_rectangle(
         (x0, y0),
         x1 - x0,
         y1 - y0,
-        edgecolor="k",
+        edgecolor= color,
         facecolor="none",
         linewidth=lw,
         transform=ccrs.PlateCarree(),

@@ -31,13 +31,15 @@ def plot_vir_image(ax, dn):
 
 def plot_top_cloud_temp(
         ax, dn,
-                        
-            lat_min = -50, 
-            lat_max = 10,
-            lat_step = 10,
-            lon_min = -100,
-            lon_max = -30, 
-            lon_step = 10):
+        lat_min = -50, 
+        lat_max = 10,
+        lat_step = 10,
+        lon_min = -100,
+        lon_max = -30, 
+        lon_step = 10,
+        step = 20
+        ):
+    
     fn = gs.get_path_by_dn(dn)
     lon, lat, temp = gs.read_gzbin(
         fn, 
@@ -47,8 +49,12 @@ def plot_top_cloud_temp(
         )
    
   
-    lat_lims = dict(min=lat_min, max=lat_max, stp=lat_step)
-    lon_lims = dict(min=lon_min, max=lon_max, stp=lon_step)
+    lat_lims = dict(
+        min=lat_min, max=lat_max, stp=lat_step
+        )
+    lon_lims = dict(
+        min=lon_min, max=lon_max, stp=lon_step
+        )
 
    
     img =  ax.pcolormesh(
@@ -71,7 +77,7 @@ def plot_top_cloud_temp(
     )
      
    
-    step = 20
+    
     ticks = np.arange(-100, 100 + step, step)
     height = "100%"
     width = "5%"
@@ -114,6 +120,4 @@ def plot_vir_and_top_cloud(dn):
     
     return fig
 
-dn = dt.datetime(2013, 2, 1)
  
-fig = plot_vir_and_top_cloud(dn)

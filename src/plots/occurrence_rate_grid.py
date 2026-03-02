@@ -13,7 +13,11 @@ b.sci_format(fontsize = 20)
  
 
 def occurrence_rate_grid(
-        nl_season, lon_bins, lat_bins, n_total):
+        nl_season, 
+        lon_bins, 
+        lat_bins, 
+        n_total
+        ):
 
     df = nl_season.copy()
 
@@ -36,7 +40,9 @@ def occurrence_rate_grid(
           .to_frame("hits")
           .reset_index()
     )
-    counts["occurrence_%"] = (counts["hits"] / n_total) * 100
+    counts["occurrence_%"] = (
+        counts["hits"] / n_total
+        ) * 100
     values = "occurrence_%"
         
     grid = pd.pivot_table(
@@ -49,7 +55,11 @@ def occurrence_rate_grid(
     return grid.fillna(0)
 
 def occurrence_kernel_smooth(
-        nl_season, lon_bins, lat_bins, sigma=1.5):
+        nl_season, 
+        lon_bins, 
+        lat_bins, 
+        sigma = 1.5
+        ):
     
     n_total = len(nl_season.index.unique())
     
@@ -57,15 +67,15 @@ def occurrence_kernel_smooth(
         nl_season,
         lon_bins,
         lat_bins,
-        n_total= n_total
+        n_total  
     )
 
-    smooth = gaussian_filter(grid.values, sigma=sigma)
+    smooth = gaussian_filter(grid.values, sigma = sigma)
 
     return pd.DataFrame(
         smooth,
-        index=grid.index,
-        columns=grid.columns
+        index = grid.index,
+        columns = grid.columns
     )
 
 def get_bins(nl, step = 2):
@@ -83,7 +93,14 @@ def get_bins(nl, step = 2):
 
 def map_defout(
         figsize = (16, 12),
-        ncols = 2, grid = False, lon_min = -80):
+        ncols = 2, 
+        grid = False, 
+        lon_min = -80, 
+        lon_max = -30, 
+        lat_min = -60,
+        lat_max = 10,
+        wspace = 0.2
+        ):
     
     fig, axs = plt.subplots(
         dpi = 300, 
@@ -93,47 +110,76 @@ def map_defout(
         subplot_kw = {"projection": ccrs.PlateCarree()},
     )
     
-    lats = dict(min = -60, max = 10, stp = 10)
-    lons = dict(min = lon_min, max= -30, stp = 15)
+    
+    lats = dict(min = lat_min, max = lat_max, stp = 10)
+    lons = dict(min = lon_min, max= lon_max, stp = 15)
     
     xlocs = np.arange(lons['min'], lons['max'], 4)
     ylocs = np.arange(lats['min'], lats['max'], 4)
-    
-    for i, ax in enumerate(axs):
+   
+    if ncols > 1:
+        plt.subplots_adjust(wspace = wspace)
+        for i, ax in enumerate(axs):
+            gg.map_attrs(
+                ax, None, 
+                lat_lims = lats, 
+                lon_lims = lons, 
+                grid = False, 
+                degress = None
+                )
+            if grid:
+                ax.gridlines(
+                    xlocs = xlocs,
+                    ylocs = ylocs,
+                    linewidth=1,
+                    color='k',
+                    linestyle='--'
+                )
+            
+            if i !=0:
+                ax.set( 
+                  
+                    yticklabels = [], 
+                    ylabel = ''
+                    )
+    else:
         gg.map_attrs(
-            ax, None, 
+            axs, None, 
             lat_lims = lats, 
             lon_lims = lons, 
             grid = False, 
             degress = None
             )
-        if grid:
-            ax.gridlines(
-                xlocs = xlocs,
-                ylocs = ylocs,
-                linewidth=1,
-                color='k',
-                linestyle='--'
-            )
-        
-        if i !=0:
-            ax.set( 
-              
-                yticklabels = [], 
-                ylabel = ''
-                )
      
     
     return fig, axs
     
-    
+
+def plot_elipses_from_catalog(ax, nl):
+    for _, row in nl.iterrows():
+        x0, x1 = row["lon_min"], row["lon_max"]
+        y0, y1 = row["lat_min"], row["lat_max"]
+        
+        gs.add_ellipse_from_bbox(
+            ax,
+            x0, x1,
+            y0, y1
+            )
+        
+        my = (x0 + x1) / 2
+        mx = (y0 + y1) / 2
+        
+        ax.scatter(mx, my, color = 'red')
+        
 
 
 def plot_occurrence_rate_grid(
         ax,
         nl,
         lon_bins,
-        lat_bins
+        lat_bins, 
+        cmap = 'jet', 
+        vmax = 30 
         ):
     
     n_total = len(nl.index.unique())
@@ -145,67 +191,42 @@ def plot_occurrence_rate_grid(
         n_total= n_total
     )
     
-    ax[1].contourf(
+    img = ax.pcolormesh(
         grid.columns,
         grid.index,
         grid.values,
-        levels = 50,
-        cmap="jet", 
-    )
-     
-    for _, row in nl.iterrows():
-        x0, x1 = row["lon_min"], row["lon_max"]
-        y0, y1 = row["lat_min"], row["lat_max"]
-        
-        gs.add_ellipse_from_bbox(
-            ax[0],
-            x0, x1,
-            y0, y1
-            )
-        
-        gs.add_ellipse_from_bbox(
-            ax[1],
-            x0, x1,
-            y0, y1
-            )
-    
-    ax[1].set( title = 'Occurrence grid (4x4)')
-    
-    return None 
+        cmap= cmap, 
+        vmin = 0, 
+        vmax = vmax
+    ) 
+    return img 
     
 
-def plot_kernel_smooth(ax, nl, lon_bins, lat_bins):
+def plot_kernel_smooth(
+        ax, nl, 
+        lon_bins, 
+        lat_bins, 
+        sigma = 1.5
+        ):
     
     grid = occurrence_kernel_smooth(
             nl, 
             lon_bins, 
             lat_bins, 
-            sigma = 1.5
+            sigma = sigma
             )
-    
-    
-    ax[2].contourf(
+      
+    img = ax.pcolormesh(
         grid.columns,
         grid.index,
         grid.values,
-        levels = 50,
         cmap="jet", 
     )
+        
+    ax.set(title = f'Gaussian filter ($\sigma$ = {sigma})')
     
-     
-    for _, row in nl.iterrows():
-        x0, x1 = row["lon_min"], row["lon_max"]
-        y0, y1 = row["lat_min"], row["lat_max"]
-        
-        my = (x0 + x1) / 2
-        mx = (y0 + y1) / 2
-        
-        ax[2].scatter(mx, my, color = 'red')
-        
-    ax[2].set( 
-        title = 'Gaussian filter ($\sigma = 1.5$)',
-        
-        )
-    
-    return None 
+    return img
+
+
+
 
