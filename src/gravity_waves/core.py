@@ -18,6 +18,8 @@ def filter_space(
     ]
 
 
+ 
+
 def potential_energy(year = 2019):
     
     df = pd.read_csv(f'{path_ep}{year}.txt', sep = '\s+')
