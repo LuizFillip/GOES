@@ -148,13 +148,15 @@ def find_nucleos(
 
     # conectividade
     if connectivity == 1:
-        structure = np.array([[0, 1, 0],
-                              [1, 1, 1],
-                              [0, 1, 0]], dtype=bool)
+        structure = np.array(
+            [[0, 1, 0],
+            [1, 1, 1],
+            [0, 1, 0]], dtype=bool)
     elif connectivity == 2:
         structure = np.ones((3, 3), dtype=bool)
     else:
-        raise ValueError("connectivity deve ser 1 (4-conect) ou 2 (8-conect)")
+        msg = "connectivity deve ser 1 (4-conect) ou 2 (8-conect)"
+        raise ValueError(msg)
 
     lab, nfeat = label(cold, structure=structure)
     objs = find_objects(lab)
@@ -199,8 +201,7 @@ def find_nucleos(
             row = [x0, x1, y0, y1, area_px]
 
         if stats:
-            row += [vals.min(), vals.mean(), int(vals.size)]  # temp_min, temp_mean, n_pixels
-
+            row += [vals.min(), vals.mean(), int(vals.size)]   
         out.append(row)
 
     if return_coords:
