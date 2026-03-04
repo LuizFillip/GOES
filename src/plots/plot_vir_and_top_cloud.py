@@ -120,4 +120,8 @@ def plot_vir_and_top_cloud(dn):
     
     return fig
 
- 
+def main():
+     
+    dn = dt.datetime(2013, 1, 1)
+    
+    fig = plot_vir_and_top_cloud(dn)

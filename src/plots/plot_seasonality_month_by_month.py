@@ -78,7 +78,7 @@ def month_by_month_seasonality(df, year):
     
     # fig.suptitle(2013, y = 1.1)
 
-def plot_in():
+def plot_in(ds, df):
 
     fig, ax = plt.subplots(
         figsize = (12, 10), 
@@ -105,8 +105,6 @@ def plot_in():
     
     b.format_month_axes( ax[-1], month_locator = 1)
 
-year = 2013
-df = b.load(f'GOES/data/nucleos/{year}')
 
 def nucleos(df):
     df["lon"] = (df["lon_min"] + df["lon_max"]) / 2
@@ -128,15 +126,15 @@ def nucleos(df):
     df = df[~df.index.duplicated()]
     return df 
 
+# year = 2013
+# df = b.load(f'GOES/data/nucleos/{year}')
 
-df = nucleos(df)
-
-#%%%
+# df = nucleos(df)
+ 
 def waves(vls):
 
     ds = gs.potential_energy(year = 2013)
-    print(ds.columns)
-    
+  
     ds = gs.filter_space(
             ds, 
             lon_min = -70, 
@@ -145,46 +143,47 @@ def waves(vls):
             lat_max = 0
             )
     
-    ds = ds.loc[ds[vls] < 20] 
+    # ds = ds.loc[ds[vls] < 20] 
     
     return ds[vls].resample('1D').mean()
 
-vls = 'mean_90_110'
-vls ='mean_60_90'
-vls = 'mean_20_60'
-
-ds = waves(vls)
-
-df1 = pd.concat([df.to_frame('nucleo'), ds], axis = 1)  
-df1 = df1.resample('30D').mean()
-
-fig, ax = plt.subplots(
-    figsize = (6, 6), 
-    sharex = True,
- 
-    dpi = 300)
-
-x = df1.iloc[:, 0].values
-y = df1.iloc[:, 1].values
-
-fit = b.linear_fit(x, y)
-
-corr = np.corrcoef(x, y)[1, 0]
- 
-ax.plot(
-    x, y, 
-    markersize = 15, 
-    linestyle = 'none',
-    color = 'purple', 
-    marker ='s', 
-    label = f'r = {round(corr, 2)}',
-    markeredgecolor = 'black',
-    markeredgewidth = 3
-    )
- 
-ax.plot(
-    x, fit.y_pred, 
-    lw = 3,  
-    )
-
-ax.legend()
+def plot_correlation_ep_number_cels():
+    vls = 'mean_90_110'
+    vls ='mean_60_90'
+    # vls = 'mean_20_60'
+    
+    ds = waves(vls)
+    
+    df1 = pd.concat([df.to_frame('nucleo'), ds], axis = 1)  
+    df1 = df1.resample('30D').mean()
+    
+    fig, ax = plt.subplots(
+        figsize = (6, 6), 
+        sharex = True,
+     
+        dpi = 300)
+    
+    x = df1.iloc[:, 0].values
+    y = df1.iloc[:, 1].values
+    
+    fit = b.linear_fit(x, y)
+    
+    corr = np.corrcoef(x, y)[1, 0]
+     
+    ax.plot(
+        x, y, 
+        markersize = 15, 
+        linestyle = 'none',
+        color = 'purple', 
+        marker ='s', 
+        label = f'r = {round(corr, 2)}',
+        markeredgecolor = 'black',
+        markeredgewidth = 3
+        )
+     
+    ax.plot(
+        x, fit.y_pred, 
+        lw = 3,  
+        )
+    
+    ax.legend()

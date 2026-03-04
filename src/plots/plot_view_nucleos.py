@@ -1,5 +1,4 @@
 import GOES  as gs 
-
 import datetime as dt 
 import matplotlib.pyplot as plt 
 import numpy as np 
@@ -47,5 +46,10 @@ def plot_view_nucleos(
         
     return fig 
 
-
+dn = dt.datetime(2013, 1, 1)
+fn = gs.get_path_by_dn(dn)
  
+plot_view_nucleos(
+        fn,
+        threshold=-40 
+        )
