@@ -114,7 +114,8 @@ def plot_vir_and_top_cloud(dn):
     ax1 = plt.subplot(gs2[1], projection = ccrs.PlateCarree())
     
     plot_vir_image(ax0, dn)
-    plot_top_cloud_temp(ax1, dn)
+    # plot_top_cloud_temp(ax1, dn)
+    gs.plot_view_nucleos(dn, ax=ax1, threshold=-40)
 
     fig.suptitle(dn.strftime('%Y-%m-%d %H:%M UT'), y = 0.73)
     
@@ -125,3 +126,6 @@ def main():
     dn = dt.datetime(2013, 1, 1)
     
     fig = plot_vir_and_top_cloud(dn)
+    
+    
+main()
