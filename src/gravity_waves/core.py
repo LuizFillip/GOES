@@ -20,8 +20,6 @@ def filter_space(
     ]
 
 
- 
-
 def format_altitudes_attrs(path):
     df = scipy.io.loadmat(path)
     
@@ -92,7 +90,8 @@ def filter_bin_by_altitude(df):
     })
     
     ds.columns = [
-        ''.join(col).strip('_').replace('Tprime', '') if isinstance(col, tuple) else col
+        ''.join(col).strip('_').replace(
+            'Tprime', '') if isinstance(col, tuple) else col
         for col in ds.columns
     ]
     
@@ -103,9 +102,6 @@ def filter_bin_by_altitude(df):
 def pandas_attrs(df):
     return pd.DataFrame(df.attrs, index = [df.index[0]]) 
 
-year = 2012
-# doy = 1
-path_out = 'D:\\database\\SABER\\'
 
 
 def run_saber(year, doy):
@@ -114,23 +110,27 @@ def run_saber(year, doy):
     files = os.listdir(path)
     out_ep = []
     out_at = []
-    desc = f'Formating {doy}'
+    desc = f'Run saber - {doy}'
     for fn in tqdm(files, desc):
-        
-        df = ep_data(path, fn)
-
-        out_ep.append(filter_bin_by_altitude(df))
-        out_at.append(pandas_attrs(df))
+        try:
+            df = ep_data(path, fn)
     
+            out_ep.append(filter_bin_by_altitude(df))
+            out_at.append(pandas_attrs(df))
+        except:
+            continue
+        
     data = pd.concat(out_ep)
     attrs = pd.concat(out_at)
     
     return data, attrs 
 
 def run_year(year):
-    
+    path_out = 'D:\\database\\SABER\\'
+
     out_ep = []
     out_at = []    
+    print('Starting,', year)
     for doy in range(1, 366):
         data, attrs = run_saber(year, doy)
         out_ep.append(data)
@@ -139,5 +139,10 @@ def run_year(year):
     df = pd.concat(out_ep)
     ds = pd.concat(out_at)
     
-    df.to_csv(f'{path_out}ep\\{year}{doy:03d}')
-    ds.to_csv(f'{path_out}attrs\\{year}{doy:03d}')
+    df.to_csv(f'{path_out}ep\\{year}')
+    ds.to_csv(f'{path_out}attrs\\{year}')
+    
+    return df, ds 
+
+year = 2012
+df, ds = run_year(year)
