@@ -44,7 +44,7 @@ def smooth_grid(grid, sigma = 1.5):
     
     return gaussian_filter(grid.values, sigma = sigma)
 
-def colorbar(ax):
+def colorbar(ax, img):
     cax = ax.inset_axes([1.1, 0, 0.05, 1])
      
     cb = plt.colorbar(
@@ -53,59 +53,67 @@ def colorbar(ax):
         )
     
     cb.set_label("Ep (J/kg)")
+    
+    return None
+
+
+
+def plot_dialy_Ep_points(df, step = 4,  values = 'mean_90_110'
+    ):
+
+    fig, ax = gs.map_defout(
+        ncols = 3, 
+        lon_max = -40,
+        wspace = 0.4
+        )
+    
+    grid = average_grid(df, values, step )
+    
+    img = ax[0].scatter(
+        df['lon'], 
+        df['lat'], 
+        c = df[values],
+        s = 100, 
+        cmap = 'jet'
+        )
+    
+    colorbar(ax[0], img)
+    
+    
+    ax[1].pcolormesh(
+        grid.columns, 
+        grid.index,
+        grid.values, 
+        cmap = 'jet'
+        )
+    
+    colorbar(ax[1], img)
+    sigma = 1.5
+    smooth = smooth_grid(grid, sigma = sigma)
+    
+    img = ax[2].pcolormesh(
+        grid.columns, 
+        grid.index,
+        smooth, 
+        cmap = 'jet'
+        )
+    
+    colorbar(ax[2], img)
+    
+    ax[0].set( title = 'Raw data (SABER)')
+    
+    ax[1].set( title = f'Occurrence grid ({step}x{step})')
+    
+    ax[2].set( 
+        title = f'Gaussian filter ($\sigma$ = {sigma})',
+        
+        )
+    dn = df.index[0]
+    fig.suptitle(dn.strftime('%Y-%m-%d'), y = 0.8)
+    
 
 df = gs.potential_energy(year = 2013)
 
-dn = dt.date(2013, 2, 1)
-df = df.loc[df.index.date == dn]
+df = df.loc[df.index.date == dt.date(2013, 1, 1)]
 
-step = 4
-
-fig, ax = gs.map_defout(ncols = 3, wspace = 0.4)
-
-
-values = 'mean_90_110'
-
-grid = average_grid(df, values, step )
-
-img = ax[0].scatter(
-    df['lon'], 
-    df['lat'], 
-    c = df[values],
-    s = 100, 
-    cmap = 'jet'
-    )
-
-colorbar(ax[0])
-
-
-ax[1].pcolormesh(
-    grid.columns, 
-    grid.index,
-    grid.values, 
-    cmap = 'jet'
-    )
-
-colorbar(ax[1])
-sigma = 1.5
-smooth = smooth_grid(grid, sigma = 1)
-
-img = ax[2].pcolormesh(
-    grid.columns, 
-    grid.index,
-    smooth, 
-    cmap = 'jet'
-    )
-
-colorbar(ax[2])
-
-ax[0].set( title = 'Raw data (SABER)')
-
-ax[1].set( title = f'Occurrence grid ({step}x{step})')
-
-ax[2].set( 
-    title = f'Gaussian filter ($\sigma$ = {sigma})',
-    
-    )
-
-fig.suptitle(dn.strftime('%Y-%m-%d'), y = 0.73)
+plot_dialy_Ep_points(df, step = 4,  values = 'mean_90_110')
