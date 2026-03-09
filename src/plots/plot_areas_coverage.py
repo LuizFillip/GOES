@@ -55,17 +55,18 @@ def colorbar(ax, img):
     return None
 
 
-df = b.load('GOES/data/nucleos3/201302')
 
-dn = dt.date(2013, 2, 1)
-nl = df.loc[df.index.date == dn]
 
-def plot_steps_grid_occurrence_one_day(dn):
+def plot_steps_grid_occurrence_one_day(nl, dn):
+    
     lon_bins, lat_bins = gs.get_bins(nl, step = 2)
 
     fig, ax  =  gs.map_defout(
-        figsize = (12, 8), ncols = 2,
-        lon_max = -40, wspace = 0.3)
+        figsize = (12, 8),
+        ncols = 2,
+        lon_max = -40, 
+        wspace = 0.3
+        )
         
     img = gs.plot_occurrence_rate_grid(
         ax[0], nl, lon_bins, lat_bins)
@@ -81,3 +82,40 @@ def plot_steps_grid_occurrence_one_day(dn):
      
     return 
 
+# plot_steps_grid_occurrence_one_day(nl)
+
+
+infile = 'GOES/data/nucleos/2013'
+
+df = b.load(infile)
+
+nl = df.loc[df.index == dn]
+
+
+fig, ax  =  gs.map_defout(
+    figsize = (12, 8),
+    ncols = 2,
+    lon_max = -30,
+    lon_min = -100,
+    lat_min = -55,
+    wspace = 0.3
+    )
+
+fn = gs.get_path_by_dn(dn)
+lon, lat, temp = gs.read_gzbin(fn)
+
+nl = gs.find_nucleos(
+    lon,
+    lat,
+    temp,
+    dn=None,
+    temp_threshold=-40,
+)
+
+
+lon_bins, lat_bins = gs.get_bins(nl, step = 4)
+ 
+img = gs.plot_occurrence_rate_grid(
+      ax[0], nl, lon_bins, lat_bins)
+
+colorbar(ax[0], img)
