@@ -112,13 +112,11 @@ def run_saber(year, doy):
     out_at = []
     desc = f'Run saber - {doy}'
     for fn in tqdm(files, desc):
-        try:
-            df = ep_data(path, fn)
-    
-            out_ep.append(filter_bin_by_altitude(df))
-            out_at.append(pandas_attrs(df))
-        except:
-            continue
+        
+        df = ep_data(path, fn)
+        out_ep.append(filter_bin_by_altitude(df))
+        out_at.append(pandas_attrs(df))
+      
         
     data = pd.concat(out_ep)
     attrs = pd.concat(out_at)
@@ -132,9 +130,12 @@ def run_year(year):
     out_at = []    
     print('Starting,', year)
     for doy in range(1, 366):
-        data, attrs = run_saber(year, doy)
-        out_ep.append(data)
-        out_at.append(attrs)
+        try:
+            data, attrs = run_saber(year, doy)
+            out_ep.append(data)
+            out_at.append(attrs)
+        except:
+            continue
         
     df = pd.concat(out_ep)
     ds = pd.concat(out_at)
@@ -144,5 +145,5 @@ def run_year(year):
     
     return df, ds 
 
-year = 2012
-df, ds = run_year(year)
+# year = 2013
+# df, ds = run_year(year)

@@ -4,6 +4,7 @@ import datetime as dt
 import pandas as pd
 import numpy as np 
 from scipy.ndimage import gaussian_filter
+import base as b 
 
 def average_grid(df, values = 'mean_90_110', step = 2):
     lon_min = df['lon'].min()
@@ -38,6 +39,20 @@ def average_grid(df, values = 'mean_90_110', step = 2):
         values = values 
     )
 
+def gaussian_filter_nan(arr, sigma):
+    arr = np.asarray(arr)
+
+    mask = np.isfinite(arr)
+
+    arr_filled = np.where(mask, arr, 0)
+
+    smooth_data = gaussian_filter(arr_filled, sigma=sigma)
+    smooth_mask = gaussian_filter(mask.astype(float), sigma=sigma)
+
+    result = smooth_data / smooth_mask
+    result[~mask] = np.nan
+
+    return result
 
 def smooth_grid(grid, sigma = 1.5):
     grid = grid.replace(np.nan, 0)
@@ -58,12 +73,16 @@ def colorbar(ax, img):
 
 
 
-def plot_dialy_Ep_points(df, step = 4,  values = 'mean_90_110'
+def plot_dialy_Ep_points(
+        df, 
+        step = 4,  
+        values = 'mean_90_110'
     ):
-
+    vmax = 90
     fig, ax = gs.map_defout(
-        ncols = 3, 
-        lon_max = -40,
+        ncols = 4, 
+        lon_max = -30,
+        lon_min = -90,
         wspace = 0.4
         )
     
@@ -74,6 +93,8 @@ def plot_dialy_Ep_points(df, step = 4,  values = 'mean_90_110'
         df['lat'], 
         c = df[values],
         s = 100, 
+        vmin = 0, 
+        vmax = vmax,
         cmap = 'jet'
         )
     
@@ -84,36 +105,60 @@ def plot_dialy_Ep_points(df, step = 4,  values = 'mean_90_110'
         grid.columns, 
         grid.index,
         grid.values, 
-        cmap = 'jet'
+        cmap = 'jet',
+        vmin = 0, 
+        vmax = vmax,
         )
     
     colorbar(ax[1], img)
-    sigma = 1.5
-    smooth = smooth_grid(grid, sigma = sigma)
+    sigma = 1.
     
-    img = ax[2].pcolormesh(
-        grid.columns, 
-        grid.index,
-        smooth, 
-        cmap = 'jet'
+    method = 'linear'
+    grid_fill = grid.interpolate(
+            axis=1,# method = method
+        ).interpolate(
+            axis=0, #method = method 
+            )
+    
+    ax[2].pcolormesh(
+        grid_fill.columns, 
+        grid_fill.index,
+        grid_fill.values, 
+        cmap = 'jet',
+        vmin = 0, 
+        vmax = vmax,
         )
     
     colorbar(ax[2], img)
+    smooth = gaussian_filter(grid_fill.values, sigma=1.0)
+    # smooth = gaussian_filter_nan(grid, sigma = sigma) 
+    
+    img = ax[-1].pcolormesh(
+        grid_fill.columns, 
+        grid_fill.index,
+        smooth, 
+        vmin = 0, 
+        vmax = vmax,
+        cmap = 'jet'
+        )
+    
+    colorbar(ax[-1], img)
     
     ax[0].set( title = 'Raw data (SABER)')
     
     ax[1].set( title = f'Occurrence grid ({step}x{step})')
-    
-    ax[2].set( 
-        title = f'Gaussian filter ($\sigma$ = {sigma})',
-        
-        )
+    ax[2].set( title = f'Grid Interpolated')
+    ax[-1].set( title = f'Gaussian filter ($\sigma$ = {sigma})')
     dn = df.index[0]
-    fig.suptitle(dn.strftime('%Y-%m-%d'), y = 0.8)
+    fig.suptitle(dn.strftime('%Y-%m-%d'), y = 0.7)
     
-
-df = gs.potential_energy(year = 2013)
-
+year = 2013 
+path = f'D:\\database\\SABER\\ep\\{year}'
+df = b.load(path)
+ 
 df = df.loc[df.index.date == dt.date(2013, 1, 1)]
 
-plot_dialy_Ep_points(df, step = 4,  values = 'mean_90_110')
+values = 'Ep_mean'
+df = df.loc[df['alt'] == 110, ['lat', 'lon', values]]
+plot_dialy_Ep_points(df, step = 4, values = values)
+
