@@ -1,12 +1,10 @@
 import datetime as dt
 from functools import lru_cache
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.patches import Ellipse
 import cartopy.crs as ccrs
-
 import GOES as gs
 import GEO as gg
 
