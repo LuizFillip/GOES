@@ -141,17 +141,90 @@ def contour_from_threshold(
 
     return segments
 
+class limits:
+    
+    def __init__(self, row, step = 5):
+    
+        self.lon0, self.lon1 = row["lon_min"], row["lon_max"]
+        self.lat0, self.lat1 = row["lat_min"], row["lat_max"]
+    
+    
+        self.lat_min = round(self.lat0) - step
+        self.lat_max = round(self.lat1) + step 
+        self.lon_min = round(self.lon0) - step
+        self.lon_max = round(self.lon1) + step 
+        
+        self.step = step
+
+
+def plot_areas_with_temp_removed(
+        ax, l, 
+        sub_lon, 
+        sub_lat, 
+        sub, 
+        segments
+        ):
+    
+    gs.plot_cloud_top_temperature(
+        sub_lon, sub_lat, sub, 
+        ax = ax,
+        lat_min = l.lat_min, 
+        lat_max = l.lat_max,
+        lon_min = l.lon_min, 
+        lon_max = l.lon_max,
+        lon_step = l.step, 
+        lat_step = l.step,
+        add_colorbar = False, 
+        cbar_ticks = None,
+    )
+    
+    gs.plot_rectangle(
+        ax,
+        l.lon0, l.lon1,
+        l.lat0, l.lat1,
+    )
+      
+    for seg in segments:
+        ax.scatter(
+            seg[:, 0], 
+            seg[:, 1], 
+            s = 3, 
+            c = 'magenta',
+            transform = ccrs.PlateCarree(),
+            zorder = 6
+            )
+    
+def remove_lower_temperatures(l, threshold = -40 ):
+    
+    lon_mask = (lon >= l.lon0) & (lon <= l.lon1)
+    lat_mask = (lat >= l.lat0) & (lat <= l.lat1)
+ 
+    sub = temp[np.ix_(lat_mask, lon_mask)]
+    sub_lat = lat[lat_mask]
+    sub_lon = lon[lon_mask]
+             
+    sub[sub > threshold] = np.nan
+ 
+    segments = contour_from_threshold(
+        sub, sub_lon, sub_lat,
+        threshold= threshold,
+        lat_min = l.lat_min, 
+        lat_max = l.lat_max,
+        lon_min = l.lon_min, 
+        lon_max = l.lon_max,
+        )
+
+    
+    return sub_lon, sub_lat, sub, segments
 
 def section_plot(lon, lat, temp, threshold = -50):
     
     fig, ax = plt.subplots(
         ncols = 3,
         dpi = 300, 
-        figsize = (14, 10),
+        figsize = (16, 12),
         subplot_kw = {"projection": ccrs.PlateCarree()}
         )
-    
-    
     
     nl = gs.find_nucleos(
          lon,
@@ -161,102 +234,43 @@ def section_plot(lon, lat, temp, threshold = -50):
          temp_threshold= threshold,
      )
     
-    whole_map(ax[-1], nl)
-    
-    # print(nl)
+    whole_map(ax[0], nl)
+  
     row = nl.iloc[44] # case um
-    
-    sel_lon0, sel_lon1 = row["lon_min"], row["lon_max"]
-    sel_lat0, sel_lat1 = row["lat_min"], row["lat_max"]
-    
-    step = 5
-    
-    lat_min, lat_max = round(sel_lat0) - step, round(sel_lat1) + step 
-    lon_min, lon_max = round(sel_lon0) - step, round(sel_lon1) + step 
-    
-    # lat_min, lat_max = -15, 0
-    # lon_min, lon_max = -60, -40
-    
-    # lat_min, lat_max = -40, -20
-    # lon_min, lon_max = -70, -40
-     
+ 
+    l = limits(row)
+ 
     gs.plot_cloud_top_temperature(
         lon, lat, temp, 
-        ax = ax[0],
-        lat_min = lat_min, lat_max = lat_max,
-        lon_min = lon_min, lon_max = lon_max,
-        lon_step = step, 
-        lat_step = step,
+        ax = ax[1],
+        lat_min = l.lat_min, lat_max = l.lat_max,
+        lon_min = l.lon_min, lon_max = l.lon_max,
+        lon_step = l.step, 
+        lat_step = l.step,
         add_colorbar = False, 
         cbar_ticks = None,
     )
     
      
     gs.plot_rectangle(
-        ax[0],
-        sel_lon0, sel_lon1,
-        sel_lat0, sel_lat1,
-    )
-  
-            
-    lon_mask = (lon >= sel_lon0) & (lon <= sel_lon1)
-    lat_mask = (lat >= sel_lat0) & (lat <= sel_lat1)
- 
-    sub = temp[np.ix_(lat_mask, lon_mask)]
-    sub_lat = lat[lat_mask]
-    sub_lon = lon[lon_mask]
-             
-    sub[sub > threshold] = np.nan
-    
-    gs.plot_cloud_top_temperature(
-        sub_lon, sub_lat, sub, 
-        ax = ax[1],
-        lat_min = lat_min, lat_max = lat_max,
-        lon_min = lon_min, lon_max = lon_max,
-        lon_step = step, 
-        lat_step = step,
-        add_colorbar = False, 
-        cbar_ticks = None,
-    )
-    # angle = -30 
-    gs.plot_rectangle(
         ax[1],
-        sel_lon0, sel_lon1,
-        sel_lat0, sel_lat1,
+        l.lon0, l.lon1,
+        l.lat0, l.lat1,
     )
-      
-    
-    segments = contour_from_threshold(
-        sub, sub_lon, sub_lat,
-        threshold= threshold,
-        lat_min = lat_min, 
-        lat_max = lat_max,
-        lon_min = lon_min, 
-        lon_max = lon_max,
-        )
-
-    for seg in segments:
-        ax[1].scatter(
-            seg[:, 0], 
-            seg[:, 1], 
-            s = 3, 
-            c = 'magenta',
-            transform = ccrs.PlateCarree(),
-            zorder = 6
-            )
     
     
+    
+    sub_lon, sub_lat, sub, segments =  remove_lower_temperatures(
+        l, threshold)
+  
+    
+    plot_areas_with_temp_removed(
+           ax[-1], l, sub_lon, sub_lat, sub, segments)
     
     
 
 
-# import base as b 
-
-# infile = 'GOES/data/nucleos3/201301'
-
-# df = b.load(infile)
-
-# df.loc[df['area'] > 200]
+threshold = -40
 
 dn = dt.datetime(2013, 1, 29, 1, 0)
 dn = dt.datetime(2013, 1, 1, 0, 0)
@@ -266,3 +280,17 @@ lon, lat, temp = gs.read_gzbin(fn)
 
 
 section_plot(lon, lat, temp, threshold = -40)
+
+# nl = gs.find_nucleos(
+#      lon,
+#      lat,
+#      temp,
+#      dn=None,
+#      temp_threshold= threshold,
+#  )
+  
+# row = nl.iloc[44] # case um
+
+
+
+
