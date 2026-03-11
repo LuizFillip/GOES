@@ -3,6 +3,14 @@ import GOES  as gs
  
 R = 6371.0  # km
 
+# def bbox_area_km2(lon_min, lon_max, lat_min, lat_max):
+#     lon1 = np.radians(lon_min)
+#     lon2 = np.radians(lon_max)
+#     lat1 = np.radians(lat_min)
+#     lat2 = np.radians(lat_max)
+
+#     return (R**2) * np.abs(lon2 - lon1) * np.abs(np.sin(lat2) - np.sin(lat1))
+
 def area_mask_km2(data, lats, lons, temp_threshold):
     data = np.asarray(data)
     lats = np.asarray(lats, float)
@@ -32,7 +40,8 @@ def area_mask_km2(data, lats, lons, temp_threshold):
     return float(area_km2)
 
 def cold_area_in_bbox_km2(
-        temp, lon, lat, threshold, lon_min, lon_max, lat_min, lat_max, R=6371.0):
+        temp, lon, lat, threshold, 
+        lon_min, lon_max, lat_min, lat_max, R=6371.0):
     lon1, lon2 = sorted([lon_min, lon_max])
     lat1, lat2 = sorted([lat_min, lat_max])
 
@@ -71,7 +80,9 @@ def cold_area_in_bbox_km2(
 def cold_stats_in_bbox(
         temp, lon, lat, 
         threshold,
-        lon_min, lon_max, lat_min, lat_max):
+        lon_min, lon_max,
+        lat_min, lat_max
+        ):
     
     lon1, lon2 = sorted([lon_min, lon_max])
     lat1, lat2 = sorted([lat_min, lat_max])
@@ -102,7 +113,8 @@ def cold_stats_in_bbox(
     return float(mean_temp), float(max_temp), float(min_temp)
 
 
-def bbox_area_km2_vec(lon_min, lon_max, lat_min, lat_max, R=6371.0):
+def bbox_area_km2_vec(
+        lon_min, lon_max, lat_min, lat_max, R=6371.0):
     lon1 = np.deg2rad(np.minimum(lon_min, lon_max))
     lon2 = np.deg2rad(np.maximum(lon_min, lon_max))
     lat1 = np.deg2rad(np.minimum(lat_min, lat_max))
@@ -111,12 +123,15 @@ def bbox_area_km2_vec(lon_min, lon_max, lat_min, lat_max, R=6371.0):
     return (R**2) * (lon2 - lon1) * (np.sin(lat2) - np.sin(lat1))
 
 def bbox_area_km2(lon_min, lon_max, lat_min, lat_max):
-    
-    lon1, lon2 = np.deg2rad(sorted([lon_min, lon_max]))
-    lat1, lat2 = np.deg2rad(sorted([lat_min, lat_max]))
 
-    return (R**2) * (lon2 - lon1) * (np.sin(lat2) - np.sin(lat1))
+    lon1 = np.radians(lon_min)
+    lon2 = np.radians(lon_max)
+    lat1 = np.radians(lat_min)
+    lat2 = np.radians(lat_max)
 
+    return ((R**2) * (lon2 - lon1) *
+            (np.sin(lat2) - np.sin(lat1)))
+ 
 
 def compute_stats(lon, lat, temp, dn, threshold = -40):
     
@@ -124,7 +139,7 @@ def compute_stats(lon, lat, temp, dn, threshold = -40):
         lon,
         lat,
         temp,
-        dn= dn,
+        dn = dn,
         temp_threshold=threshold,
     )
     
@@ -163,4 +178,13 @@ def compute_stats(lon, lat, temp, dn, threshold = -40):
     
     return nl.round(3)
 
-
+def test():
+    import datetime as dt 
+    
+    dn = dt.datetime(2013, 1, 1)
+    fn = gs.get_path_by_dn(dn)
+    lon, lat, temp = gs.read_gzbin(fn)
+    
+    df = compute_stats(lon, lat, temp, dn, threshold = -40)
+    
+    df.columns 

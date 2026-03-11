@@ -40,7 +40,8 @@ def _minute_filter_ok(filename: str, only_minute_zero: bool) -> bool:
     if not only_minute_zero:
         return True
     try:
-        return gs.fn2dn(filename).minute == 0
+        minutes = gs.fn2dn(filename).minute
+        return minutes == 0 or minutes == 30
     except Exception:
         # se não conseguir parsear, ignora (não baixa)
         return False
@@ -69,13 +70,13 @@ def download_goes_month(
         
         if not _is_candidate_file(href):
             continue
-        # if not _minute_filter_ok(href, only_minute_zero):
-        #     continue
+        if not _minute_filter_ok(href, only_minute_zero):
+            continue
        
         out_path = out_dir / href
         if skip_existing and out_path.exists():
             continue
-        
+        # print(href)
         wb.download(url, href, str(out_dir))
         downloaded.append(href)
 
@@ -123,4 +124,12 @@ def imshow_url(url):
  
     return Image.open(BytesIO(r.content))
 
-# download_main(2013)
+# download_main(2012)
+
+
+# downloaded = download_goes_month(
+#     2012, 
+#     1, 
+#     drive = "D", 
+#     only_minute_zero=True
+#     )

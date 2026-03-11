@@ -1,6 +1,5 @@
 import gzip
 import numpy as np
-import pandas as pd 
 import xarray as xr
 
 def ensure_lat_ascending(lon, lat, temp):
