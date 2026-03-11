@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np 
 import cartopy.crs as ccrs
 from scipy.ndimage import binary_erosion
+import base as b 
+
 
 def border_points_from_mask(
         temp, lon, lat, 
@@ -51,44 +53,19 @@ def border_points_from_mask(
 
     return lon2d[border], lat2d[border]
 
-def plot_semi_axis(ax, e):
-    xc_e, yc_e = e.center
-    w_e = e.width
-    h_e = e.height
-    ang_e = e.angle
-    
-    theta = np.deg2rad(ang_e)
-    
-    a = h_e / 2
-    b = w_e / 2
-    
-    # eixo maior
-    x_major = [xc_e - a*np.sin(theta),
-               xc_e + a*np.sin(theta)]
-    y_major = [yc_e + a*np.cos(theta),
-               yc_e - a*np.cos(theta)]
-    
-    # eixo menor
-    x_minor = [xc_e - b*np.cos(theta), 
-               xc_e + b*np.cos(theta)]
-    y_minor = [yc_e - b*np.sin(theta), 
-               yc_e + b*np.sin(theta)]
-    
-    ax.plot(x_major, y_major, 'k-', transform=ccrs.PlateCarree())
-    ax.plot(x_minor, y_minor, 'k-', transform=ccrs.PlateCarree())
 
-def angle_from_rectangle(lon_min, lon_max, lat_min, lat_max, descending=True):
-    rect_width = lon_max - lon_min
-    rect_height = lat_max - lat_min
 
-    ang = np.degrees(np.arctan2(rect_height, rect_width))
-    return -ang if descending else ang
-
-def whole_map(ax, nl):
+def whole_map(
+        ax, nl, 
+        lon, lat, temp, 
+        add_colorbar = True
+        ):
+    
     gs.plot_cloud_top_temperature(
-        lon, lat, temp, ax = ax,
-        add_colorbar=False, 
-        cbar_ticks=None,
+        lon, lat, temp,
+        ax = ax,
+        add_colorbar = add_colorbar, 
+        cbar_ticks = None,
     )
     for _, row in nl.iterrows():
           gs.plot_rectangle(
@@ -158,12 +135,12 @@ class limits:
 
 
 def plot_areas_with_temp_removed(
-        ax, l, 
-        sub_lon, 
-        sub_lat, 
-        sub, 
-        segments
+        ax, lon, lat, temp, l, threshold
         ):
+    
+    sub_lon, sub_lat, sub, segments =  remove_lower_temperatures(
+        lon, lat, temp, l, threshold)
+
     
     gs.plot_cloud_top_temperature(
         sub_lon, sub_lat, sub, 
@@ -194,7 +171,9 @@ def plot_areas_with_temp_removed(
             zorder = 6
             )
     
-def remove_lower_temperatures(l, threshold = -40 ):
+    return None 
+    
+def remove_lower_temperatures(lon, lat, temp, l, threshold = -40 ):
     
     lon_mask = (lon >= l.lon0) & (lon <= l.lon1)
     lat_mask = (lat >= l.lat0) & (lat <= l.lat1)
@@ -236,13 +215,44 @@ def section_plot(lon, lat, temp, threshold = -50):
     
     whole_map(ax[0], nl)
   
-    row = nl.iloc[44] # case um
- 
+    
+    
+    
+
+def plot_whole_map_with_steps(dn, num = 44, threshold = -40):
+    
+    fn = gs.get_path_by_dn(dn)
+    lon, lat, temp = gs.read_gzbin(fn)
+    
+     
+    nl = gs.find_nucleos(
+          lon,
+          lat,
+          temp,
+          dn=None,
+          temp_threshold= threshold,
+      )
+     
+    fig, ax = plt.subplots(
+         ncols = 2,
+         nrows = 2,
+         dpi = 300, 
+         figsize = (14, 14),
+         subplot_kw = {"projection": ccrs.PlateCarree()}
+         )
+    
+    plt.subplots_adjust(hspace = 0.1)
+    gs.plot_vir_image(ax[0, 0], dn)
+    whole_map(ax[0, 1], nl, lon, lat, temp, add_colorbar = False)
+    
+    
+    row = nl.iloc[num] # case um
+    
     l = limits(row)
- 
-    gs.plot_cloud_top_temperature(
+    
+    _, _, m, _ = gs.plot_cloud_top_temperature(
         lon, lat, temp, 
-        ax = ax[1],
+        ax = ax[1, 0],
         lat_min = l.lat_min, lat_max = l.lat_max,
         lon_min = l.lon_min, lon_max = l.lon_max,
         lon_step = l.step, 
@@ -253,44 +263,47 @@ def section_plot(lon, lat, temp, threshold = -50):
     
      
     gs.plot_rectangle(
-        ax[1],
+        ax[1, 0],
         l.lon0, l.lon1,
         l.lat0, l.lat1,
     )
     
+    plot_areas_with_temp_removed(ax[1, 1], lon, lat, temp, l, threshold)
     
     
-    sub_lon, sub_lat, sub, segments =  remove_lower_temperatures(
-        l, threshold)
+    b.plot_letters(
+            ax, 
+            x = 0.02, 
+            y = 0.85, 
+            offset = 0, 
+            fontsize = 35,
+            num2white = 0
+            )
+     
+    ticks = np.arange(-100, 100, 20)
+    
+    cax = ax[0, 0].inset_axes([0.35, 1.25, 1.5, 0.07])
+    
+    cb = plt.colorbar(
+        m, 
+        orientation = 'horizontal',
+        cax = cax,
+        ticks = ticks 
+        )
+     
+    cb.set_label('Temperature (°C)')
+    
+    fig.suptitle(dn.strftime('%d %B %Y %H:%M UT'), y = 1.)
+    return fig
+    
   
     
-    plot_areas_with_temp_removed(
-           ax[-1], l, sub_lon, sub_lat, sub, segments)
-    
-    
-
-
-threshold = -40
-
 dn = dt.datetime(2013, 1, 29, 1, 0)
 dn = dt.datetime(2013, 1, 1, 0, 0)
 
-fn = gs.get_path_by_dn(dn)
-lon, lat, temp = gs.read_gzbin(fn)
+fig = plot_whole_map_with_steps(dn, num = 44, threshold = -40)
 
+path_to_save = 'G:\\Meu Drive\\Papers\\Convective_analysis\\'
 
-section_plot(lon, lat, temp, threshold = -40)
-
-# nl = gs.find_nucleos(
-#      lon,
-#      lat,
-#      temp,
-#      dn=None,
-#      temp_threshold= threshold,
-#  )
-  
-# row = nl.iloc[44] # case um
-
-
-
-
+figname = 'vir_and_top_cloud'
+fig.savefig(path_to_save + figname, dpi = 400)
