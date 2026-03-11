@@ -9,17 +9,18 @@ import requests
 from io import BytesIO
 from PIL import Image
 
-def goes_url(year: int, month: int) -> str:
-    base = "http://ftp.cptec.inpe.br/goes/"
+base_url = "http://ftp.cptec.inpe.br/goes/"
 
+def goes_url(year: int, month: int, base_url = base_url) -> str:
+    
     if 2003 <= year < 2013:
-        base += "goes12/retangular_4km/ch4_bin/"
+        base_url += "goes12/retangular_4km/ch4_bin/"
     elif 2013 <= year < 2018:
-        base += "goes13/retangular_4km/ch4_bin/"
+        base_url += "goes13/retangular_4km/ch4_bin/"
     else:  # year >= 2018
-        base += "goes16/retangular/ch13/"
+        base_url += "goes16/retangular/ch13/"
 
-    return f"{base}{year:04d}/{month:02d}/"
+    return f"{base_url}{year:04d}/{month:02d}/"
 
 
 def ensure_goes_dir(drive: str, year: int, month: int) -> Path:
@@ -97,7 +98,7 @@ def download_main(year = 2012, start = 1, end = 12):
         
 
 def image_url(dn):
-    url = 'https://ftp.cptec.inpe.br/goes/goes13/goes13_web/ams_ir2_alta'
+    url = base_url + 'goes13/goes13_web/ams_ir2_alta'
     url += f'/{dn.year}/{dn.month:02d}/'
     hrefs = wb.request(url)
 
@@ -124,12 +125,7 @@ def imshow_url(url):
  
     return Image.open(BytesIO(r.content))
 
-# download_main(2012)
+# for year in range(2014, 2018):
+#     download_main(year)
 
-
-# downloaded = download_goes_month(
-#     2012, 
-#     1, 
-#     drive = "D", 
-#     only_minute_zero=True
-#     )
+ 
