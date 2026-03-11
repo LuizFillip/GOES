@@ -144,20 +144,22 @@ def plot_correlation_ep_number_cels(x, y):
 
 freq = '30D'
 year = 2012
-s1 = nucleos(year = year, freq = freq, area = 30)
+s1 = nucleos(year = year, freq = freq, area = 0)
 
 s2 = wave(year = year, freq = freq, values = 'Ep_mean')
 
-df = pd.concat([s1, s2], axis = 1).dropna()
+# df = pd.concat([s1, s2], axis = 1).dropna()
 
-heights = np.arange(20, 120, 10)
-x = df['nucleos'].values
-corr = []
-for alt in heights:
-    y = df[alt].values
-    corr.append(np.corrcoef(x, y)[1, 0])
+# heights = np.arange(20, 120, 10)
+# x = df['nucleos'].values
+# corr = []
+# for alt in heights:
+#     y = df[alt].values
+#     corr.append(np.corrcoef(x, y)[1, 0])
     
     
-plt.plot(corr, heights)
+# plt.plot(corr, heights)
 
+df = b.load(f'GOES/data/nucleos_40/{year}')
 
+df 

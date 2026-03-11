@@ -341,8 +341,8 @@ def run_saber(year: int, doy: int, root: str | Path = r"D:\database") -> tuple[p
         msg = f"Nenhum arquivo processado com sucesso em {day_path}"
         raise ValueError(msg)
 
-    data = pd.concat(out_ep, ignore_index=False)
-    attrs = pd.concat(out_at, ignore_index=False) if out_at else pd.DataFrame()
+    data = pd.concat(out_ep, ignore_index = False)
+    attrs = pd.concat(out_at, ignore_index = False) if out_at else pd.DataFrame()
 
     return data, attrs
 
@@ -392,6 +392,6 @@ def run_year(
 
 
 # if __name__ == "__main__":
-# for year in range(2014, 1)
-year = 2014
-df, ds = run_year(year)
+# for year in range(2015, 2018):
+ 
+#     df, ds = run_year(year)
