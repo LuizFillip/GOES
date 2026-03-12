@@ -3,7 +3,7 @@ from functools import lru_cache
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
-from matplotlib.patches import Ellipse
+ 
 import cartopy.crs as ccrs
 import GOES as gs
 import GEO as gg
@@ -179,122 +179,7 @@ def map_defout(
     
     return fig, axs
 
-
-# -----------------------
-# Shapes helpers
-# -----------------------
-def plot_rectangle(
-    ax,
-    lon0,
-    lon1,
-    lat0,
-    lat1,
-   
-    lw=2.5,
-    color="k",
-    dot_size=50,
-    number=None,
-    number_offset=1.0,
-):
-    """
-    Desenha retângulo (bbox) e opcionalmente marca o centro.
-    """
-    x0, x1 = sorted([lon0, lon1])
-    y0, y1 = sorted([lat0, lat1])
-
-    rect = plt.Rectangle(
-        (x0, y0),
-        x1 - x0,
-        y1 - y0,
-        edgecolor=color,
-        facecolor="none",
-        linewidth=lw,
-        transform=ccrs.PlateCarree(),
-        zorder=6,
-    )
-    ax.add_patch(rect)
-
-    xc = 0.5 * (x0 + x1)
-    yc = 0.5 * (y0 + y1)
-
-    if dot_size is not None:
-        ax.scatter(
-            xc,
-            yc,
-            s=dot_size,
-            color="red",
-            transform=ccrs.PlateCarree(),
-            zorder=7,
-        )
-
-    if number is not None:
-        ax.text(
-            xc,
-            yc + number_offset,
-            str(number),
-            transform=ccrs.PlateCarree(),
-            zorder=8,
-        )
-
-    return rect
-
-
-def add_ellipse_from_bbox(
-    ax,
-    lon_min,
-    lon_max,
-    lat_min,
-    lat_max,
-    angle = 0,
-    shrink=1.0,
-    edgecolor="k",
-    linewidth=2.5,
-    facecolor="none",
-    zorder=7,
-    center_marker=True,
-    center_marker_size=20,
-):
-    """
-    Desenha uma elipse inscrita no bbox e (opcionalmente) marca o centro.
-    """
-    x0, x1 = sorted([lon_min, lon_max])
-    y0, y1 = sorted([lat_min, lat_max])
-
-    xc = 0.5 * (x0 + x1)
-    yc = 0.5 * (y0 + y1)
-
-    width = (x1 - x0) * shrink
-    height = (y1 - y0) * shrink
-
-    e = Ellipse(
-        (xc, yc),
-        width=width,
-        height=height,
-        angle=angle,
-        edgecolor=edgecolor,
-        facecolor=facecolor,
-        linewidth=linewidth,
-        transform=ccrs.PlateCarree(),
-        zorder=zorder,
-    )
-    ax.add_patch(e)
-
-    if center_marker:
-        ax.scatter(
-            xc,
-            yc,
-            s=center_marker_size,
-            color="red",
-            transform=ccrs.PlateCarree(),
-            zorder=zorder + 1,
-        )
-
-    return e
-
-
-# -----------------------
-# Full view
-# -----------------------
+ 
 def plot_view_nucleos(
     dn,
     ax=None,
@@ -336,14 +221,14 @@ def plot_view_nucleos(
     if detect and not nl.empty:
         for _, row in nl.iterrows():
             if ellipse:
-                add_ellipse_from_bbox(
+                gs.add_ellipse_from_bbox(
                     ax,
                     row["lon_min"], row["lon_max"],
                     row["lat_min"], row["lat_max"],
                     edgecolor="k",
                 )
             else:
-                plot_rectangle(
+                gs.plot_rectangle(
                     ax,
                     row["lon_min"], row["lon_max"],
                     row["lat_min"], row["lat_max"],
