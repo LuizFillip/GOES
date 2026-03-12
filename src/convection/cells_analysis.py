@@ -1,4 +1,6 @@
 import numpy as np 
+import GOES as gs 
+import pandas as pd 
 
 def extract_convection_region(
         ax, lon, lat, temp, 
@@ -23,3 +25,32 @@ def extract_convection_region(
     sub_temp = np.where(sub_temp > threshold, np.nan, sub_temp)
 
     return sub_lon, sub_lat, sub_temp
+
+def occurrence_area_weighted(nl, lon_bins, lat_bins):
+    df = nl.copy()
+ 
+    df["lon"] = (df["lon_min"] + df["lon_max"]) / 2
+    df["lat"] = (df["lat_min"] + df["lat_max"]) / 2
+
+    df["area_km2"] = gs.bbox_area_km2(
+        df["lon_min"], df["lon_max"],
+        df["lat_min"], df["lat_max"]
+    )
+
+    df["lon_bin"] = pd.cut(df["lon"], lon_bins, labels=lon_bins[:-1])
+    df["lat_bin"] = pd.cut(df["lat"], lat_bins, labels=lat_bins[:-1])
+
+    weighted = (
+        df.groupby(["lon_bin", "lat_bin"])["area_km2"]
+          .sum()
+          .reset_index()
+    )
+
+    grid = pd.pivot_table(
+        weighted,
+        index="lat_bin",
+        columns = "lon_bin",
+        values = "area_km2"
+    )
+
+    return grid.fillna(0)
