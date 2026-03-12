@@ -4,3 +4,4 @@ from .nucleo_detection import find_nucleos
 from .download import image_url, imshow_url 
 from .dirs import *
 from .areas import *
+from .cells_analysis import occurrence_area_weighted
