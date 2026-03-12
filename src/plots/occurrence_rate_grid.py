@@ -2,8 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 from scipy.ndimage import gaussian_filter
-import GEO as gg
-import datetime as dt 
 import GOES as gs 
 import base as b 
 import numpy as np 
@@ -122,6 +120,18 @@ def occurrence_rate_grid(
 
     return grid.fillna(0)
 
+def smooth_grid(grid, sigma = 1):
+ 
+    smooth = gaussian_filter(grid.values, sigma=sigma)
+  
+    # vmax = np.nanpercentile(grid.values, 99)   
+    # norm = colors.Normalize(vmin=0, vmax=vmax)
+    
+    smooth = smooth / smooth.max() * grid.max()
+    
+    return smooth 
+    
+
 def occurrence_kernel_smooth(
         nl_season, 
         lon_bins, 
@@ -156,12 +166,6 @@ def get_bins(nl, step = 2):
     lat_bins = np.arange(lat_min, lat_max + step, step)
     
     return lon_bins, lat_bins 
-
-
-
-
-    
-
 
 
 def plot_occurrence_rate_grid(
@@ -221,6 +225,6 @@ def plot_kernel_smooth(
 
 
 
-infile = 'GOES/data/nucleos3/201301'
+# infile = 'GOES/data/nucleos3/201301'
 
-df = b.load(infile)
+# df = b.load(infile)
