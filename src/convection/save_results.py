@@ -1,99 +1,3 @@
-# import datetime as dt 
-# import GOES  as gs
-# import pandas as pd 
-# from tqdm import tqdm 
-
-
-# def run_days(ref, threshold = -40, B = 'D'):
-#     desc =  ref.strftime('%B')
- 
-#     files = gs.walk_goes(ref, B)
-    
-#     out = []
-    
-#     for fn in tqdm(files, desc):
-     
-#         lon, lat, temp = gs.read_gzbin(fn)
-        
-#         result = gs.compute_stats(
-#             lon, lat, temp, 
-#             gs.fn2dn(fn),
-#             threshold = threshold
-#         )
-#         out.append(result)  
-  
-
-#     return pd.concat(out)
-
-# def run_months(year):
-    
-#     root = 'GOES/data/nucleos3/'
-    
-#     out = []
-#     print('Find convections in', year)
-#     for month in range(1, 13):
-        
-#         ref = dt.datetime(year, month, 1)
-        
-#         path_save = f'{root}{ref.year}{ref.month:02d}/'
-
-#         df = run_days(ref)
-        
-#         df.to_csv(path_save) 
-#         out.append(df)
-        
-#     return pd.concat(out)
-
-
-# def run_all_years(start, end):
-#     out = []
-    
-    
-#     for year in range(start, end + 1):
-        
-#         out.append(run_months(year)) 
-            
-#     df = pd.concat(out)
-    
-#     df.to_csv('nucleos_2012_2018')
-        
- 
-# def join_year(year = 2013):
-#     import os 
-#     import base as b 
-#     infile = 'GOES/data/nucleos3/'
-#     out = []
-#     desc = 'Join files'
-#     for fn in tqdm(os.listdir(infile), desc):
-#         if fn[:4] == str(year):
-#             out.append(b.load(infile + fn))
-            
-#     df = pd.concat(out)
-    
-#     df.to_csv(f'GOES/data/nucleos_40/{year}')
-
-# def test_one_file():
-#     ref = dt.datetime(2013, 1, 1)
-    
-#     files = gs.walk_goes(ref, 'D')
-    
-#     fn = files[2]
-               
-#     lon, lat, temp = gs.read_gzbin(fn)
-    
-#     result = gs.compute_stats(
-#         lon, lat, temp, 
-#         gs.fn2dn(fn),
-#         threshold = -40
-#     )
-    
-#     result
-
- 
-# year = 2012
-# df = run_months(year)
-# df.to_csv(f'GOES/data/nucleos_40/{year}')
-
 from pathlib import Path
 import datetime as dt
 
@@ -121,7 +25,7 @@ def run_days(
         return pd.DataFrame()
 
     out = []
-    desc = ref.strftime("%Y-%m")
+    desc = ref.strftime("%B")
     desc = f"Processing {desc}"
     for fn in tqdm(files, desc=desc, leave=False):
         try:
@@ -180,9 +84,10 @@ def run_year(
     out = []
     for month in range(1, 13):
         try:
-            df_month = run_month(year, month, threshold=threshold, root_out=root_out)
-            if not df_month.empty:
-                out.append(df_month)
+            df_month = run_month(
+                year, month, threshold=threshold, root_out=root_out)
+            # if not df_month.empty:
+            out.append(df_month)
         except Exception as exc:
             print(f"Erro no ano={year}, mês={month:02d}: {exc}")
 
@@ -206,7 +111,9 @@ def run_all_years(
 
     for year in range(start, end + 1):
         try:
-            df_year = run_year(year, threshold=threshold, root_out=root_out)
+            df_year = run_year(
+                year, 
+                threshold=threshold, root_out=root_out)
             if not df_year.empty:
                 out.append(df_year)
         except Exception as exc:
@@ -258,7 +165,8 @@ def test_one_file(threshold: float = -40):
     files = gs.walk_goes(ref, "D")
 
     if len(files) < 3:
-        raise ValueError("Menos de 3 arquivos encontrados para o teste.")
+        msg = "Menos de 3 arquivos encontrados para o teste."
+        raise ValueError(msg)
 
     fn = files[2]
 
@@ -276,19 +184,19 @@ def test_one_file(threshold: float = -40):
 
 
 # if __name__ == "__main__":
-year = 2012
-month = 2
-# df = run_year(year, threshold=-40)
-# ROOT_JOINED.mkdir(parents=True, exist_ok=True)
-# df.to_csv(ROOT_JOINED / f"{year}", index=True)
+year = 2014
+# month = 2
+df = run_year(year, threshold=-40)
+ROOT_JOINED.mkdir(parents=True, exist_ok=True)
+df.to_csv(ROOT_JOINED / f"{year}", index=True)
 
-import os 
-ref = dt.datetime(year, month, 1) 
+# import os 
+# ref = dt.datetime(year, month, 1) 
 
-files = gs.walk_goes(ref, 'D')
+# files = gs.walk_goes(ref, 'D')
 
-for fn in files:
-    dn = gs.fn2dn(fn)
+# for fn in files:
+#     dn = gs.fn2dn(fn)
     
-    if dn.minute == 15 or dn.minute == 45:
-        os.remove(fn)
+#     if dn.minute == 15 or dn.minute == 45:
+#         os.remove(fn)
