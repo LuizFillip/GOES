@@ -163,22 +163,17 @@ def join_year(
     """
     Junta os CSVs mensais de um ano.
     """
+    import base as b  
+    
     out = []
+    desc = f'Joining {year}'
+    for month in tqdm(range(1, 13), desc):
+        monthly_dir = Path(ROOT_OUT) / f"{year}{month:02d}"
+        out.append(b.load(monthly_dir))
+        
+    df = pd.concat(out).sort_index()
 
-    for month in range(1, 13):
-        monthly_dir = root_in / f"{year}{month:02d}"
-        monthly_file = monthly_dir / f"nucleos_{year}{month:02d}_thr{abs(int(threshold))}"
-
-        if monthly_file.exists():
-            out.append(pd.read_csv(monthly_file, index_col=0, parse_dates=True))
-
-    if not out:
-        return pd.DataFrame()
-
-    df = pd.concat(out, ignore_index=False)
-
-    # root_out.mkdir(parents=True, exist_ok=True)
-    df.to_csv(root_out / f"{year}", index=True)
+    df.to_csv(ROOT_JOINED / f"{year}", index=True)
 
     return df
 

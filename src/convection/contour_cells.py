@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Feb 26 11:04:43 2026
-
-@author: Luiz
-"""
-
 import matplotlib.pyplot as plt
-
 import matplotlib.patches as mpatches
 import matplotlib.path as mpath
 

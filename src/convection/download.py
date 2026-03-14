@@ -126,7 +126,7 @@ def imshow_url(url):
     return Image.open(BytesIO(r.content))
 
 # for year in range(2016, 2018):
-year = 2016
-download_main(year)
+# year = 2016
+# download_main(year)
 
  
