@@ -268,7 +268,8 @@ def plot_whole_map_with_steps(dn, num = 44, threshold = -40):
         l.lat0, l.lat1,
     )
     
-    plot_areas_with_temp_removed(ax[1, 1], lon, lat, temp, l, threshold)
+    plot_areas_with_temp_removed(
+        ax[1, 1], lon, lat, temp, l, threshold)
     
     
     b.plot_letters(

@@ -1,6 +1,5 @@
 import pandas as pd 
 from scipy.ndimage import gaussian_filter
-# import GOES as gs 
 import base as b 
 import numpy as np 
 
@@ -48,11 +47,16 @@ def occurrence_rate_grid(
     return grid
 
 def smooth_grid(grid, sigma = 1):
- 
-    smooth = gaussian_filter(grid.values, sigma=sigma)
+    
+    if isinstance(grid, pd.DataFrame):
+        grid  = grid.values
+    else:
+        grid = grid.copy()
+        
+    smooth = gaussian_filter(grid, sigma=sigma)
   
     
-    smooth = smooth / smooth.max() * grid.max()
+    smooth = smooth / smooth.max() * np.nanmax(grid)
     
     return smooth 
 
