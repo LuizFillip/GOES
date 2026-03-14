@@ -163,20 +163,6 @@ ALT_BINS = np.arange(20, 121, 10)
 DEFAULT_OUTDIR = Path(r"D:\database\SABER")
 
 
-def filter_space(
-    df: pd.DataFrame,
-    lon_min: float = -50,
-    lon_max: float = -40,
-    lat_min: float = -10,
-    lat_max: float = 10,
-) -> pd.DataFrame:
-    """Filtra o DataFrame por limites espaciais."""
-    mask = (
-        df["lon"].between(lon_min, lon_max, inclusive="neither")
-        & df["lat"].between(lat_min, lat_max, inclusive="neither")
-    )
-    return df.loc[mask].copy()
-
 
 def coords_time(filename: str) -> tuple[datetime, float, float]:
     """
@@ -313,7 +299,10 @@ def pandas_attrs(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(df.attrs, index=[df.index[0]])
 
 
-def run_saber(year: int, doy: int, root: str | Path = r"D:\database") -> tuple[pd.DataFrame, pd.DataFrame]:
+def run_saber(
+        year: int, doy: int,
+        root: str | Path = r"D:\database"
+        ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Processa todos os arquivos de um dia juliano.
     """
