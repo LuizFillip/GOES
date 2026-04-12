@@ -2,10 +2,7 @@ import gzip
 import numpy as np
 import xarray as xr
 import base as b 
-import GOES as gs 
-
-
- 
+import GOES as gs
  
 def read_gzbin(
         f_name,  
@@ -45,7 +42,33 @@ def read_dataset(fname):
     lons = ds['lon'].values 
     return lons, lats, data 
 
+def load_top_cloud(dn):
+    fn = gs.get_path_by_dn(dn)
+    
+    if dn.year >= 2018:
+        return read_dataset(fn)
+    else:
+        return read_gzbin(fn)
 
+
+def load_nuclei(year):
+    path = f"GOES/data/nucleos_40/{year}"
+    df = b.load(path).copy()
+ 
+    df["lon"] = (df["lon_min"] + df["lon_max"]) / 2
+    df["lat"] = (df["lat_min"] + df["lat_max"]) / 2
+
+    return df 
+def filter_space(
+        df, lon_min, lon_max, 
+                 lat_min, lat_max):
+        
+    return df.loc[
+        (df['lon'] > lon_min) &
+        (df['lon'] < lon_max) & 
+        (df['lat'] > lat_min) &
+        (df['lat'] < lat_max)
+        ]
 
 def nucleos_by_time(
     year = 2013,
@@ -56,14 +79,9 @@ def nucleos_by_time(
     lat_min = -10,
     lat_max = 0,
 ):
+    df = load_nuclei(year)
     
-    path = f"GOES/data/nucleos_40/{year}"
-    df = b.load(path).copy()
- 
-    df["lon"] = (df["lon_min"] + df["lon_max"]) / 2
-    df["lat"] = (df["lat_min"] + df["lat_max"]) / 2
-
-    df = gs.filter_space(
+    df = filter_space(
             df,
             lon_min = lon_min,
             lon_max = lon_max,
@@ -72,9 +90,15 @@ def nucleos_by_time(
         )
     
     df = df.loc[df["area"] > area]
+    
+    if freq is not None:
+        ds = df.resample(freq).size().rename("nucleos")
+        return ds.to_frame()
+    else:
+        return df 
 
-    ds = df.resample(freq).size().rename("nucleos")
-    return ds.to_frame()
-
-
-
+def test_load_top_cloud():
+    import datetime as dt 
+    
+    dn = dt.datetime(2013, 1, 1)
+    load_top_cloud(dn)
