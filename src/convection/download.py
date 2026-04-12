@@ -37,7 +37,10 @@ def _is_candidate_file(name: str) -> bool:
     return name.endswith(".gz") or name.endswith(".nc")
 
 
-def _minute_filter_ok(filename: str, only_minute_zero: bool) -> bool:
+def _minute_filter_ok(
+        filename: str, 
+        only_minute_zero: bool
+        ) -> bool:
     if not only_minute_zero:
         return True
     try:
@@ -126,7 +129,13 @@ def imshow_url(url):
     return Image.open(BytesIO(r.content))
 
 # for year in range(2016, 2018):
-# year = 2016
-# download_main(year)
+# year = 2021
+# month = 8
+# # download_main(year)
 
- 
+# downloaded = download_goes_month(
+#     year, 
+#     month, 
+#     drive = "D", 
+#     only_minute_zero = False
+#     )
