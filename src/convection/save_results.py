@@ -5,7 +5,7 @@ from tqdm import tqdm
 import GOES as gs
 
 
-ROOT_OUT = "GOES/data/nucleos3/"
+ROOT_OUT = 'D:\\database\\nucleos\\'
 ROOT_JOINED = Path("GOES/data/nucleos_40")
 
 
@@ -30,6 +30,7 @@ def test_one_file(threshold: float = -40):
     )
 
     return result
+
 def run_days(
         ref: dt.datetime, 
         threshold: float = -40, 
@@ -50,7 +51,7 @@ def run_days(
     for fn in tqdm(files, desc=desc, leave=True):
         try:
             lon, lat, temp = gs.read_gzbin(fn)
-
+    
             result = gs.compute_stats(
                 lon,
                 lat,
@@ -60,8 +61,8 @@ def run_days(
             )
             out.append(result)
 
-        except Exception as exc:
-            print(f"Erro ao processar {fn}: {exc}")
+        except:
+            continue
 
     if not out:
         return pd.DataFrame()
@@ -73,13 +74,20 @@ def run_days(
 def run_month(
         year: int, 
         month: int, 
-        threshold: float = -40, 
-        out_dir: Path = ROOT_OUT
+        threshold: float = -40,  
+        out_dir: str = ROOT_OUT     
+
         ) -> pd.DataFrame:
+    
     """
     Processa um mês e salva o resultado em CSV.
     """
     ref = dt.datetime(year, month, 1)
+    
+    year = ref.year 
+    month = ref.month
+    out_dir = Path(f"{out_dir}{year}{month:02d}")
+    
     df = run_days(ref, threshold = threshold, freq = "D")
  
     df.to_csv(out_dir, index = True)
@@ -103,13 +111,12 @@ def run_year(
         
         out_dir = Path(f"{root_out}{year}{month:02d}")
         
-        if out_dir.exists():
-            continue
+        # if out_dir.exists():
+        #     continue
         
         df_month = run_month(
             year, month, 
-            threshold = threshold,
-            out_dir = out_dir
+            threshold = threshold
             )
         if not df_month.empty:
             out.append(df_month)
@@ -131,16 +138,16 @@ def run_all_years(
     out = []
 
     for year in range(start, end + 1):
-        try:
-            df_year = run_year(
-                year, 
-                threshold = threshold, 
-                root_out = root_out
-                )
-            if not df_year.empty:
-                out.append(df_year)
-        except Exception as exc:
-            print(f"Erro no ano {year}: {exc}")
+        # try:
+        df_year = run_year(
+            year, 
+            threshold = threshold, 
+            root_out = root_out
+            )
+        if not df_year.empty:
+            out.append(df_year)
+        # except Exception as exc:
+        #     print(f"Erro no ano {year}: {exc}")
 
     if not out:
         return pd.DataFrame()
@@ -148,8 +155,8 @@ def run_all_years(
     df = pd.concat(out, ignore_index = False)
 
     # joined_out.mkdir(parents = True, exist_ok = True)
-    out_file = joined_out / f"nucleos_{start}_{end}_thr{abs(int(threshold))}"
-    df.to_csv(out_file, index = True)
+    # out_file = joined_out / f"nucleos_{start}_{end}_thr{abs(int(threshold))}"
+    # df.to_csv(out_file, index = True)
 
     return df
 
@@ -180,11 +187,18 @@ def join_year(
 
 
 def main():
- 
-    year = 2017
+  
      
-    df = run_year(year, threshold = -40)
-    ROOT_JOINED.mkdir(parents=True, exist_ok=True)
-    df.to_csv(ROOT_JOINED / f"{year}", index=True)
+    # df = run_year(year, threshold = -50)
+    run_all_years(2012, 2017, threshold = -50)
+    # ROOT_JOINED.mkdir(parents=True, exist_ok=True)
+    # df.to_csv(ROOT_JOINED / f"{year}", index=True)
 
 # main()
+
+# result = test_one_file(threshold = -50)
+# ref = dt.datetime(2013, 1, 1)
+# # run_days(ref)
+
+# thresold = -50
+
