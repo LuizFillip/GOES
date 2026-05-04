@@ -115,3 +115,7 @@ def all_nucleos_for_one_height(
     )
 
     return fig
+
+
+# fig = all_nucleos_for_one_height()
+

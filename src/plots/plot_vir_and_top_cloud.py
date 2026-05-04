@@ -4,6 +4,7 @@ import datetime as dt
 import cartopy.crs as ccrs
 from matplotlib.gridspec import GridSpec
 import base as b 
+import numpy as np 
  
 b.sci_format(fontsize = 20)
 
@@ -49,22 +50,37 @@ def plot_vir_and_top_cloud(dn):
     
     plot_vir_image(ax0, dn)
   
-    gs.plot_view_nucleos(dn, ax=ax1, threshold=-40)
+    gs.plot_view_nucleos(
+        dn, ax=ax1, 
+        threshold=-40, 
+        detect= False, 
+        lat_min = -60, 
+        lat_max = -15)
     
-    fmt = '%Y-%m-%d %H:%M UT'
+    fmt = 'GOES-13 -- %Y-%m-%d %H:%M UT'
     
     fig.suptitle(
         dn.strftime(fmt), y = 0.73)
     
     axs = [ax0, ax1]
-    b.plot_letters(
-            axs, 
-            x = 0.02, 
-            y = 0.8, 
-            offset = 0, 
-            fontsize = 30,
-            num2white = 0
-            )
+     
+    # ax0.set_aspect('auto')
+    
+    extent = [-90, -25, -56, 13]
+
+    ax1.set_extent(extent, crs=ccrs.PlateCarree())
+    ax0.set_extent(extent, crs=ccrs.PlateCarree())
+    
+    ax1.set(yticks = np.arange(-50, 20, 10))
+
+    # b.plot_letters(
+    #         axs, 
+    #         x = 0.02, 
+    #         y = 0.8, 
+    #         offset = 0, 
+    #         fontsize = 30,
+    #         num2white = 0
+    #         )
     return fig
 
 def main():
@@ -76,7 +92,7 @@ def main():
     path_to_save = 'G:\\Meu Drive\\Papers\\Convective_analysis\\'
      
     figname = 'vir_and_top_cloud'
-    fig.savefig(path_to_save + figname, dpi = 400)
+    # fig.savefig(path_to_save + figname, dpi = 400)
 
     
-# main()
+main()

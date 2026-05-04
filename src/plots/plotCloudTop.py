@@ -29,7 +29,7 @@ def plot_cloud_top_temperature(
     cmap_path="GOES/src/plots/colorbar.cpt",
     vmin=-100,
     vmax=100,
-    lat_min=-50,
+    lat_min=-60,
     lat_max=10,
     lat_step=10,
     lon_min=-100,
@@ -111,7 +111,7 @@ def plot_elipses_from_catalog(ax, nl):
         mx = (y0 + y1) / 2
         
         ax.scatter(mx, my, color = 'red')
-        
+    return None 
 
 
 def map_defout(
@@ -136,8 +136,13 @@ def map_defout(
     )
     
     
-    lats = dict(min = lat_min, max = lat_max, stp = lat_step)
-    lons = dict(min = lon_min, max= lon_max, stp = lon_step)
+    lats = dict(
+        min = lat_min, 
+                max = lat_max, 
+                stp = lat_step)
+    lons = dict(min = lon_min, 
+                max= lon_max, 
+                stp = lon_step)
     
     xlocs = np.arange(lons['min'], lons['max'], 4)
     ylocs = np.arange(lats['min'], lats['max'], 4)
@@ -187,14 +192,20 @@ def plot_view_nucleos(
     detect=True,
     ellipse=True,
     cmap_path="GOES/src/plots/colorbar.cpt",
-    title = False
+    title = False, 
+    lat_max=20,
+    lon_max=-30,
+    lat_min=-40,
+    lon_min=-90,
+    add_colorbar = True
 ):
     """
     Lê GOES do dia dn, plota temperatura e (opcional) desenha nucleos detectados.
     Retorna (fig, ax, nl).
     """
-    fn = gs.get_path_by_dn(dn)
-    lon, lat, temp = gs.read_gzbin(fn)
+    
+    lon, lat, temp = gs.load_top_cloud(dn)
+    
 
     nl = gs.find_nucleos(
         lon,
@@ -210,11 +221,11 @@ def plot_view_nucleos(
         temp,
         ax=ax,
         cmap_path=cmap_path,
-        lat_max=12,
-        lon_max=-30,
-        lat_min=-55,
-        lon_min=-100,
-        add_colorbar=True,
+        lat_max= lat_max,
+        lon_max= lon_max,
+        lat_min= lat_min,
+        lon_min= lon_min,
+        add_colorbar=add_colorbar,
         cbar_label=u"Temperature (°C)",
     )
 
@@ -244,7 +255,7 @@ def plot_view_nucleos(
 
 
 def example():
-    dn = dt.datetime(2013, 1, 1)
+    dn = dt.datetime(2021, 8, 1)
     
     # fig, ax = plt.subplots(
     #     dpi=300,
@@ -254,3 +265,24 @@ def example():
     ax = None 
     plot_view_nucleos(dn, ax=ax, threshold=-40)
     plt.show()
+    
+    
+# example()
+
+# dn = dt.datetime(2021, 8, 1, 10)
+
+ 
+# plot_view_nucleos(
+#     dn, 
+#     ax = None, 
+#     threshold = -50, 
+#     detect = True,
+#     ellipse = False, 
+#     title = True, 
+#     lat_max=20,
+#     lon_max=-30,
+#     lat_min=-10,
+#     lon_min=-90,
+#     add_colorbar = False
+#     )
+# plt.show()

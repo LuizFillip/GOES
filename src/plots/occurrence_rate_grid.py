@@ -107,11 +107,9 @@ def plot_occurrence_rate_grid(
         grid.index,
         values,
         cmap= cmap, 
-        vmin = 0, 
-        # vmax = vmax
+        vmin = 0,  
     ) 
-    
-    print(values.max())
+     
     return img 
     
  
